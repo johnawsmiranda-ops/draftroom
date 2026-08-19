@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
+import { Avatar } from "@/components/Avatar";
 
 type Project = { id: string; title: string };
 
@@ -39,10 +40,12 @@ function DateIcon() {
 
 export function MobileShell({
   userName,
+  avatarUrl,
   projects,
   children,
 }: {
   userName?: string | null;
+  avatarUrl?: string | null;
   projects: Project[];
   children: React.ReactNode;
 }) {
@@ -74,6 +77,9 @@ export function MobileShell({
         </Link>
         <div className="flex items-center gap-3">
           <ViewModeToggle variant="mobile" />
+          <Link href="/profile" aria-label="Profile">
+            <Avatar name={userName} avatarUrl={avatarUrl} size={28} />
+          </Link>
           <LogoutButton />
         </div>
       </header>

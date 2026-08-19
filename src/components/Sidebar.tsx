@@ -3,14 +3,17 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { NewProjectInline } from "@/components/NewProjectInline";
 import { SidebarProjectRow } from "@/components/DeletableProjectLink";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
+import { Avatar } from "@/components/Avatar";
 
 type Project = { id: string; title: string };
 
 export function Sidebar({
   userName,
+  avatarUrl,
   projects,
 }: {
   userName?: string | null;
+  avatarUrl?: string | null;
   projects: Project[];
 }) {
   return (
@@ -32,6 +35,12 @@ export function Sidebar({
         >
           Writing Dates
         </Link>
+        <Link
+          href="/profile"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+        >
+          Profile
+        </Link>
       </nav>
 
       <div className="mt-8 px-6 flex items-center justify-between">
@@ -49,8 +58,13 @@ export function Sidebar({
       <div className="px-6 py-3 border-t border-room-line/60">
         <ViewModeToggle variant="sidebar" />
       </div>
-      <div className="px-6 py-5 border-t border-room-line/60 flex items-center justify-between">
-        <span className="text-xs text-room-line truncate">{userName ?? "Writer"}</span>
+      <div className="px-6 py-5 border-t border-room-line/60 flex items-center justify-between gap-2">
+        <Link href="/profile" className="flex items-center gap-2 min-w-0 group">
+          <Avatar name={userName} avatarUrl={avatarUrl} size={26} dark />
+          <span className="text-xs text-room-line truncate group-hover:text-paper transition-colors">
+            {userName ?? "Writer"}
+          </span>
+        </Link>
         <LogoutButton />
       </div>
     </aside>

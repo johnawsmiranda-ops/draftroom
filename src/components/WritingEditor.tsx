@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { autosaveChapterAction, createChapterAction } from "@/lib/actions/documents";
 import { AtmospherePlayer } from "@/components/AtmospherePlayer";
+import { ExportMenu } from "@/components/ExportMenu";
 
 type Chapter = {
   id: string;
@@ -38,10 +39,33 @@ export function WritingEditor({
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
   const [sessionStart] = useState(() => Date.now());
   const [elapsedMin, setElapsedMin] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const editorRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep isFullscreen in sync even when the browser exits fullscreen on its
+  // own (e.g. the person hits Esc rather than our button).
+  useEffect(() => {
+    function onChange() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      rootRef.current?.requestFullscreen().catch(() => {
+        // Fullscreen can be denied (e.g. iframe without allow="fullscreen")
+        // — fail quietly, the writing surface still works without it.
+      });
+    }
+  }
 
   useEffect(() => {
     const t = setInterval(() => setElapsedMin(Math.floor((Date.now() - sessionStart) / 60000)), 30000);
@@ -120,7 +144,7 @@ export function WritingEditor({
     : "flex flex-col min-h-screen bg-paper";
 
   return (
-    <div className={rootClasses} onMouseMove={lightsOff ? wakeChrome : undefined}>
+    <div ref={rootRef} className={rootClasses} onMouseMove={lightsOff ? wakeChrome : undefined}>
       <div
         className={`flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-8 py-4 transition-opacity duration-500 ${
           lightsOff ? (showChrome ? "opacity-100" : "opacity-0 pointer-events-none") : "opacity-100"
@@ -158,6 +182,26 @@ export function WritingEditor({
             {saving === "saving" ? "Saving…" : "Saved"}
           </span>
           <AtmospherePlayer dark={lightsOff} />
+          <ExportMenu documentId={doc.id} dark={lightsOff} />
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit full screen" : "Full screen"}
+            className={`w-7 h-7 flex items-center justify-center rounded-full border transition-colors ${
+              lightsOff
+                ? "border-paper/30 text-paper hover:bg-white/10"
+                : "border-line text-ink-soft hover:border-ink hover:text-ink"
+            }`}
+          >
+            {isFullscreen ? (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 3v4a2 2 0 0 1-2 2H3M21 9h-4a2 2 0 0 1-2-2V3M3 15h4a2 2 0 0 1 2 2v4M15 21v-4a2 2 0 0 1 2-2h4" />
+              </svg>
+            ) : (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+              </svg>
+            )}
+          </button>
           <button
             onClick={toggleLights}
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${

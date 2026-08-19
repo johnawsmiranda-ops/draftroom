@@ -21,7 +21,9 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
             key={tab.href}
             href={tab.href}
             className={`pb-3 border-b-2 transition-colors ${
-              active ? "border-ink text-ink" : "border-transparent text-ink-soft hover:text-ink"
+              active
+                ? "border-ink text-ink font-semibold"
+                : "border-transparent text-ink-soft hover:text-ink"
             }`}
           >
             {tab.label}

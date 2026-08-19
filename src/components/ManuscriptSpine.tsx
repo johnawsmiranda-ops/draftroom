@@ -97,6 +97,11 @@ export function ManuscriptSpine({
   const [chapters, setChapters] = useState(doc.chapters);
   const [, startTransition] = useTransition();
   const dragIndex = useRef<number | null>(null);
+  // Only the drag handle should be able to start a reorder — without this,
+  // the whole row being `draggable` meant clicking anywhere (title, open
+  // button, a slightly-off tap) could be read as a tiny drag and silently
+  // reorder chapters.
+  const dragEnabled = useRef(false);
 
   function persistOrder(next: Chapter[]) {
     setChapters(next);
@@ -163,28 +168,57 @@ export function ManuscriptSpine({
           <div
             key={chapter.id}
             draggable
-            onDragStart={() => {
+            onDragStart={(e) => {
+              if (!dragEnabled.current) {
+                e.preventDefault();
+                return;
+              }
               dragIndex.current = index;
             }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => onDrop(index)}
+            onDragEnd={() => {
+              dragEnabled.current = false;
+            }}
             className="group flex items-center gap-3 rounded-xl border border-line bg-card px-4 py-3 hover:-translate-y-0.5 transition-transform"
           >
-            <span className="cursor-grab active:cursor-grabbing" title="Drag to reorder">
+            <span
+              className="cursor-grab active:cursor-grabbing"
+              title="Drag to reorder"
+              onMouseDown={() => {
+                dragEnabled.current = true;
+              }}
+              onMouseUp={() => {
+                dragEnabled.current = false;
+              }}
+            >
               <DragHandle />
             </span>
             <span className="text-xs text-ink-soft w-5 shrink-0">{index + 1}.</span>
-            <Link
-              href={`/projects/${projectId}/write/${doc.id}?chapter=${chapter.id}`}
-              className="flex-1 min-w-0"
-            >
+            <div className="flex-1 min-w-0">
               <EditableTitle
                 value={chapter.title}
                 onSave={(t) => renameChapter(chapter.id, t)}
                 className="font-display text-base block truncate"
               />
-            </Link>
+            </div>
             <span className="text-xs text-ink-soft shrink-0">{chapter.wordCount.toLocaleString()} words</span>
+            <Link
+              href={`/projects/${projectId}/write/${doc.id}?chapter=${chapter.id}`}
+              title="Open chapter"
+              className="shrink-0 flex items-center gap-1 text-xs text-ink-soft hover:text-ink transition-colors rounded-full border border-line px-2.5 py-1 hover:border-ink"
+            >
+              Open
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M9 6l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
             <button
               onClick={() => removeChapter(chapter.id, chapter.title)}
               title="Delete chapter"

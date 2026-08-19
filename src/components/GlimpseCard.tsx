@@ -33,7 +33,15 @@ export function GlimpseCard({
   style?: React.CSSProperties;
 }) {
   const [hover, setHover] = useState(false);
+  const [copied, setCopied] = useState(false);
   const color = COLOR_MAP[glimpse.color ?? "cream"] ?? "bg-sticky-cream";
+
+  function copy() {
+    navigator.clipboard.writeText(glimpse.content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
 
   const time = new Date(glimpse.createdAt).toLocaleTimeString([], {
     hour: "numeric",
@@ -70,6 +78,9 @@ export function GlimpseCard({
             className={glimpse.pinned ? "text-accent" : "hover:text-ink"}
           >
             📌
+          </button>
+          <button title={copied ? "Copied!" : "Copy"} onClick={copy} className="hover:text-ink">
+            {copied ? "✓" : "⧉"}
           </button>
           <button
             title="Delete"

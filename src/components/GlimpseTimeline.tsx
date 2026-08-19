@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { togglePinAction, deleteGlimpseAction } from "@/lib/actions/glimpses";
 
 type Glimpse = {
@@ -23,6 +24,51 @@ function dateLabel(date: Date) {
   if (sameDay(d, today)) return "Today";
   if (sameDay(d, yesterday)) return "Yesterday";
   return d.toLocaleDateString([], { month: "long", day: "numeric" });
+}
+
+function TimelineRow({ g }: { g: Glimpse }) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard.writeText(g.content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
+  return (
+    <div className="relative group">
+      <span className="absolute -left-[26px] top-1.5 w-2 h-2 rounded-full bg-accent/70" />
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] text-ink-soft mb-1">
+            {new Date(g.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+            {g.type === "voice" && " · voice"}
+          </p>
+          <p className="font-display text-lg leading-snug whitespace-pre-wrap">{g.content}</p>
+        </div>
+        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-xs">
+          <button
+            onClick={() => togglePinAction(g.id, g.projectId)}
+            className={g.pinned ? "text-accent" : "text-ink-soft hover:text-ink"}
+          >
+            📌
+          </button>
+          <button title={copied ? "Copied!" : "Copy"} onClick={copy} className="text-ink-soft hover:text-ink">
+            {copied ? "✓" : "⧉"}
+          </button>
+          <button
+            onClick={() => {
+              if (confirm("Let this glimpse go?")) deleteGlimpseAction(g.id, g.projectId);
+            }}
+            className="text-ink-soft hover:text-ink"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function GlimpseTimeline({ glimpses }: { glimpses: Glimpse[] }) {
@@ -49,36 +95,7 @@ export function GlimpseTimeline({ glimpses }: { glimpses: Glimpse[] }) {
           <h3 className="text-xs uppercase tracking-[0.2em] text-ink-soft mb-4">{label}</h3>
           <div className="space-y-4 border-l border-line pl-5">
             {items.map((g) => (
-              <div key={g.id} className="relative group">
-                <span className="absolute -left-[26px] top-1.5 w-2 h-2 rounded-full bg-accent/70" />
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] text-ink-soft mb-1">
-                      {new Date(g.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                      {g.type === "voice" && " · voice"}
-                    </p>
-                    <p className="font-display text-lg leading-snug whitespace-pre-wrap">
-                      {g.content}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-xs">
-                    <button
-                      onClick={() => togglePinAction(g.id, g.projectId)}
-                      className={g.pinned ? "text-accent" : "text-ink-soft hover:text-ink"}
-                    >
-                      📌
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm("Let this glimpse go?")) deleteGlimpseAction(g.id, g.projectId);
-                      }}
-                      className="text-ink-soft hover:text-ink"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <TimelineRow key={g.id} g={g} />
             ))}
           </div>
         </div>

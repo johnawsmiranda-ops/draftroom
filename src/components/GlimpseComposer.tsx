@@ -67,6 +67,14 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
 
   function submit() {
     if (!text.trim()) return;
+
+    // Stop any in-progress voice capture first, so a stray word picked up
+    // after clicking Save never sneaks into the glimpse or keeps the mic open.
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+    }
+
     const fd = new FormData();
     fd.set("projectId", projectId);
     fd.set("type", mode);

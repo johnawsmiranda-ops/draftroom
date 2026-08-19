@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getProject } from "@/lib/actions/projects";
 import { ProjectTabs } from "@/components/ProjectTabs";
+import { ProjectMenu } from "@/components/ProjectMenu";
 
 export default async function ProjectLayout({
   children,
@@ -21,6 +22,7 @@ export default async function ProjectLayout({
           </Link>
           <h1 className="font-display text-3xl mt-2">{project.title}</h1>
         </div>
+        <ProjectMenu projectId={projectId} title={project.title} />
       </header>
       <ProjectTabs projectId={projectId} />
       <div className="flex-1">{children}</div>

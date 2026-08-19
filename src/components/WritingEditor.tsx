@@ -23,6 +23,10 @@ type Doc = {
   chapters: Chapter[];
 };
 
+function isHtmlEmpty(html: string) {
+  return html.replace(/<[^>]*>/g, "").trim().length === 0;
+}
+
 export function WritingEditor({
   projectId,
   document: doc,
@@ -47,6 +51,7 @@ export function WritingEditor({
     (doc.writingFormat as WritingFormatKey) ?? "plain-white",
   );
   const [showFormatPicker, setShowFormatPicker] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(isHtmlEmpty(active?.content ?? ""));
   const format = getWritingFormat(formatKey);
 
   const editorRef = useRef<HTMLDivElement>(null);
@@ -83,6 +88,7 @@ export function WritingEditor({
   useEffect(() => {
     if (editorRef.current && active) {
       editorRef.current.innerHTML = active.content || "<p><br></p>";
+      setIsEmpty(isHtmlEmpty(active.content ?? ""));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
@@ -107,6 +113,7 @@ export function WritingEditor({
 
   function onInput() {
     setSaving("idle");
+    setIsEmpty(isHtmlEmpty(editorRef.current?.innerHTML ?? ""));
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(doSave, 1200);
   }
@@ -237,13 +244,22 @@ export function WritingEditor({
         className="flex-1 overflow-y-auto"
         style={lightsOff ? undefined : { backgroundColor: format.bg, backgroundImage: format.backgroundImage }}
       >
-        <div className="max-w-2xl mx-auto px-6 py-16">
+        <div className="max-w-2xl mx-auto px-6 py-16 relative">
+          {isEmpty && (
+            <p
+              aria-hidden
+              className="absolute top-16 left-6 font-display text-[19px] leading-[1.9] pointer-events-none select-none"
+              style={{ color: lightsOff ? "rgba(255,255,255,0.35)" : format.text, opacity: lightsOff ? 1 : 0.35 }}
+            >
+              Type here…
+            </p>
+          )}
           <div
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning
             onInput={onInput}
-            className="font-display text-[19px] leading-[1.9] outline-none min-h-[60vh]"
+            className="font-display text-[19px] leading-[1.9] outline-none min-h-[60vh] relative"
             style={{ color: lightsOff ? "rgba(255,255,255,0.95)" : format.text }}
           />
         </div>

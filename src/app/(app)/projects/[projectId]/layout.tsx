@@ -15,7 +15,7 @@ export default async function ProjectLayout({
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-10 pt-10 pb-4 flex items-center justify-between">
+      <header className="px-4 sm:px-10 pt-10 pb-4 flex items-center justify-between">
         <div>
           <Link href="/home" className="text-xs text-ink-soft hover:text-ink">
             ← All projects

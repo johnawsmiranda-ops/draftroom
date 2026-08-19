@@ -1,13 +1,14 @@
 import { requireUser } from "@/lib/current-user";
-import { Sidebar } from "@/components/Sidebar";
+import { listProjects } from "@/lib/actions/projects";
+import { AppShell } from "@/components/AppShell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  const projects = await listProjects();
 
   return (
-    <div className="flex flex-1 bg-paper">
-      <Sidebar userName={user.name} />
-      <div className="flex-1 min-w-0">{children}</div>
-    </div>
+    <AppShell userName={user.name} projects={projects.map((p) => ({ id: p.id, title: p.title }))}>
+      {children}
+    </AppShell>
   );
 }

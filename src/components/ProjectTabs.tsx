@@ -13,7 +13,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   ];
 
   return (
-    <div className="px-10 border-b border-line flex gap-6 text-sm">
+    <div className="px-4 sm:px-10 border-b border-line flex gap-6 text-sm">
       {tabs.map((tab) => {
         const active = pathname?.startsWith(tab.href);
         return (

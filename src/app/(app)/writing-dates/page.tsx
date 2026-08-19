@@ -9,7 +9,7 @@ export default async function WritingDatesPage() {
   const past = dates.filter((d) => d.completedAt);
 
   return (
-    <main className="px-10 py-12 max-w-2xl mx-auto">
+    <main className="px-4 sm:px-10 py-12 max-w-2xl mx-auto">
       <h1 className="font-display text-3xl mb-2">Writing Dates</h1>
       <p className="text-ink-soft text-sm mb-10">
         Set a time to come back. When it arrives, we&apos;ll show you what you left behind.

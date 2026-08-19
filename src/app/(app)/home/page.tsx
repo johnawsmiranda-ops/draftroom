@@ -21,7 +21,7 @@ export default async function HomePage() {
   const firstName = (user.name ?? "").split(" ")[0];
 
   return (
-    <main className="px-10 py-12 max-w-5xl mx-auto">
+    <main className="px-4 sm:px-10 py-12 max-w-5xl mx-auto">
       <p className="text-sm uppercase tracking-[0.2em] text-ink-soft mb-2">
         {firstName ? `Welcome, ${firstName}` : "Welcome"}
       </p>

@@ -12,7 +12,7 @@ export default async function ProjectWritingDatesPage({
   const [dates, project] = await Promise.all([listProjectWritingDates(projectId), getProject(projectId)]);
 
   return (
-    <div className="px-10 py-6 max-w-2xl mx-auto">
+    <div className="px-4 sm:px-10 py-6 max-w-2xl mx-auto">
       <div className="rounded-2xl border border-line bg-card p-5 mb-8">
         <NewWritingDateForm projects={[{ id: project.id, title: project.title }]} />
       </div>

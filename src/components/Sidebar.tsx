@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { listProjects } from "@/lib/actions/projects";
 import { LogoutButton } from "@/components/LogoutButton";
 import { NewProjectInline } from "@/components/NewProjectInline";
 import { SidebarProjectRow } from "@/components/DeletableProjectLink";
+import { ViewModeToggle } from "@/components/ViewModeToggle";
 
-export async function Sidebar({ userName }: { userName?: string | null }) {
-  const projects = await listProjects();
+type Project = { id: string; title: string };
 
+export function Sidebar({
+  userName,
+  projects,
+}: {
+  userName?: string | null;
+  projects: Project[];
+}) {
   return (
     <aside className="w-60 shrink-0 bg-room text-paper/90 flex flex-col h-screen sticky top-0">
       <Link href="/home" className="font-display text-base tracking-wide px-6 pt-6 pb-8 block">
@@ -40,6 +46,9 @@ export async function Sidebar({ userName }: { userName?: string | null }) {
         </div>
       </div>
 
+      <div className="px-6 py-3 border-t border-room-line/60">
+        <ViewModeToggle variant="sidebar" />
+      </div>
       <div className="px-6 py-5 border-t border-room-line/60 flex items-center justify-between">
         <span className="text-xs text-room-line truncate">{userName ?? "Writer"}</span>
         <LogoutButton />

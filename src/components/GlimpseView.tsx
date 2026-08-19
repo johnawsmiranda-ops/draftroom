@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GlimpseComposer } from "@/components/GlimpseComposer";
 import { GlimpseWall } from "@/components/GlimpseWall";
 import { GlimpseTimeline } from "@/components/GlimpseTimeline";
+import { useViewMode } from "@/lib/view-mode";
 
 type Glimpse = {
   id: string;
@@ -20,14 +21,28 @@ type Glimpse = {
 };
 
 export function GlimpseView({ projectId, glimpses }: { projectId: string; glimpses: Glimpse[] }) {
+  const { mode } = useViewMode();
   const [view, setView] = useState<"wall" | "timeline">("wall");
+  const [userChose, setUserChose] = useState(false);
+
+  // The free-drag Wall is awkward on touch, so default to Timeline on
+  // mobile — but don't fight a view the person already picked themselves.
+  useEffect(() => {
+    if (!userChose) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setView(mode === "mobile" ? "timeline" : "wall");
+    }
+  }, [mode, userChose]);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-1 bg-paper-deep rounded-full p-1">
           <button
-            onClick={() => setView("wall")}
+            onClick={() => {
+              setView("wall");
+              setUserChose(true);
+            }}
             className={`text-xs px-3.5 py-1.5 rounded-full transition-colors ${
               view === "wall" ? "bg-card shadow-sm text-ink" : "text-ink-soft"
             }`}
@@ -35,7 +50,10 @@ export function GlimpseView({ projectId, glimpses }: { projectId: string; glimps
             Wall
           </button>
           <button
-            onClick={() => setView("timeline")}
+            onClick={() => {
+              setView("timeline");
+              setUserChose(true);
+            }}
             className={`text-xs px-3.5 py-1.5 rounded-full transition-colors ${
               view === "timeline" ? "bg-card shadow-sm text-ink" : "text-ink-soft"
             }`}

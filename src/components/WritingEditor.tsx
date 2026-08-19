@@ -122,11 +122,11 @@ export function WritingEditor({
   return (
     <div className={rootClasses} onMouseMove={lightsOff ? wakeChrome : undefined}>
       <div
-        className={`flex items-center justify-between px-8 py-4 transition-opacity duration-500 ${
+        className={`flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-8 py-4 transition-opacity duration-500 ${
           lightsOff ? (showChrome ? "opacity-100" : "opacity-0 pointer-events-none") : "opacity-100"
         } ${lightsOff ? "border-b border-room-line" : "border-b border-line"}`}
       >
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-3 text-sm flex-wrap">
           {!lightsOff && (
             <a href={`/projects/${projectId}/write`} className="text-ink-soft hover:text-ink">
               ←
@@ -186,7 +186,7 @@ export function WritingEditor({
       </div>
 
       <div
-        className={`flex items-center justify-between px-8 py-3 transition-opacity duration-500 ${
+        className={`flex items-center justify-between px-4 sm:px-8 py-3 transition-opacity duration-500 ${
           lightsOff ? (showChrome ? "opacity-100" : "opacity-0 pointer-events-none") : "opacity-100"
         } ${lightsOff ? "border-t border-room-line" : "border-t border-line"}`}
       >

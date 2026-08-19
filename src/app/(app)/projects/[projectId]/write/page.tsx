@@ -14,7 +14,7 @@ export default async function WritePage({
   const documents = await listDocuments(projectId);
 
   return (
-    <div className="px-10 py-6 max-w-3xl mx-auto">
+    <div className="px-4 sm:px-10 py-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display text-xl">Your writing</h2>
         <NewDocumentInline projectId={projectId} />

@@ -10,7 +10,7 @@ export default async function GlimpsesPage({
   const glimpses = await listGlimpses(projectId);
 
   return (
-    <div className="px-10 py-6">
+    <div className="px-4 sm:px-10 py-6">
       <GlimpseView projectId={projectId} glimpses={glimpses} />
     </div>
   );

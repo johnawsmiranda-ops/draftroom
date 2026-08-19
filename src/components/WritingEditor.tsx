@@ -291,6 +291,46 @@ export function WritingEditor({
               {b.label}
             </button>
           ))}
+          <span className={`w-px h-4 mx-1 ${lightsOff ? "bg-paper/20" : "bg-line"}`} />
+          {[
+            { cmd: "justifyLeft", title: "Align left" },
+            { cmd: "justifyCenter", title: "Align center" },
+            { cmd: "justifyRight", title: "Align right" },
+            { cmd: "justifyFull", title: "Justify" },
+          ].map((b) => (
+            <button
+              key={b.cmd}
+              title={b.title}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                exec(b.cmd);
+              }}
+              className={`w-7 h-7 rounded flex items-center justify-center ${
+                lightsOff ? "text-paper/70 hover:bg-white/10" : "text-ink-soft hover:bg-paper-deep"
+              }`}
+            >
+              {b.cmd === "justifyLeft" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M4 6h16M4 12h10M4 18h13" strokeLinecap="round" />
+                </svg>
+              )}
+              {b.cmd === "justifyCenter" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M4 6h16M7 12h10M5.5 18h13" strokeLinecap="round" />
+                </svg>
+              )}
+              {b.cmd === "justifyRight" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M4 6h16M10 12h10M7 18h13" strokeLinecap="round" />
+                </svg>
+              )}
+              {b.cmd === "justifyFull" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+                </svg>
+              )}
+            </button>
+          ))}
         </div>
         <div className={`flex items-center gap-4 text-xs ${lightsOff ? "text-paper/50" : "text-ink-soft"}`}>
           <span>{elapsedMin}m this session</span>

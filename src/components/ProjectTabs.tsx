@@ -7,8 +7,8 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   const pathname = usePathname();
 
   const tabs = [
-    { label: "Glimpses", href: `/projects/${projectId}/glimpses` },
     { label: "Manuscript", href: `/projects/${projectId}/write` },
+    { label: "Glimpses", href: `/projects/${projectId}/glimpses` },
     { label: "Writing Dates", href: `/projects/${projectId}/writing-dates` },
   ];
 

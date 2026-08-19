@@ -55,16 +55,16 @@ export function MobileShell({
   const tabs = [
     { href: "/home", label: "Home", Icon: HomeIcon, match: (p: string) => p === "/home" },
     {
-      href: firstProjectId ? `/projects/${firstProjectId}/glimpses` : "/home",
-      label: "Glimpse",
-      Icon: GlimpseIcon,
-      match: (p: string) => p.includes("/glimpses"),
-    },
-    {
       href: firstProjectId ? `/projects/${firstProjectId}/write` : "/home",
       label: "Write",
       Icon: WriteIcon,
       match: (p: string) => p.includes("/write"),
+    },
+    {
+      href: firstProjectId ? `/projects/${firstProjectId}/glimpses` : "/home",
+      label: "Glimpse",
+      Icon: GlimpseIcon,
+      match: (p: string) => p.includes("/glimpses"),
     },
     { href: "/writing-dates", label: "Dates", Icon: DateIcon, match: (p: string) => p.includes("writing-dates") },
   ];

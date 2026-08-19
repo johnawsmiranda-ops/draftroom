@@ -10,6 +10,11 @@ import { OAuthButtons } from "@/components/OAuthButtons";
 export default function SignupPage() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(signupAction, undefined);
   const [mismatch, setMismatch] = useState(false);
+  // Controlled for the same reason as the login page — Server Actions clear
+  // uncontrolled fields after submission, so a failed signup (e.g. email
+  // already in use) would otherwise wipe out what was already typed.
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     const form = e.currentTarget;
@@ -52,6 +57,8 @@ export default function SignupPage() {
                   name="name"
                   type="text"
                   required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your full name"
                   className="w-full rounded-lg border border-line bg-paper pl-9 pr-3.5 py-2.5 text-sm outline-none focus:border-ink transition-colors"
                 />
@@ -77,6 +84,8 @@ export default function SignupPage() {
                   name="email"
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
                   className="w-full rounded-lg border border-line bg-paper pl-9 pr-3.5 py-2.5 text-sm outline-none focus:border-ink transition-colors"
                 />

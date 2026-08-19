@@ -36,7 +36,7 @@ export function SidebarProjectRow({ id, title }: { id: string; title: string }) 
   return (
     <div className="group/row flex items-center rounded-lg hover:bg-white/5 transition-colors">
       <Link
-        href={`/projects/${id}/glimpses`}
+        href={`/projects/${id}/write`}
         className="flex-1 min-w-0 px-3 py-2 truncate"
         title={title}
       >

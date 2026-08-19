@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { loginAction, type ActionState } from "@/lib/actions/auth-actions";
 import { AuthShowcase } from "@/components/AuthShowcase";
 import { PasswordField } from "@/components/PasswordField";
@@ -9,6 +9,10 @@ import { OAuthButtons } from "@/components/OAuthButtons";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(loginAction, undefined);
+  // Keep email controlled — Server Actions reset uncontrolled form fields
+  // after each submission, so on a failed login (wrong password) the email
+  // the person just typed would otherwise vanish along with the error.
+  const [email, setEmail] = useState("");
 
   return (
     <main className="flex-1 flex bg-paper">
@@ -39,6 +43,8 @@ export default function LoginPage() {
                   name="email"
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
                   className="w-full rounded-lg border border-line bg-paper pl-9 pr-3.5 py-2.5 text-sm outline-none focus:border-ink transition-colors"
                 />

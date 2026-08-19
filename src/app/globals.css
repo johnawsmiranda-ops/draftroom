@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f5f0e6;
+  --paper-deep: #ece3d1;
+  --card: #fbf8f2;
+  --ink: #241f19;
+  --ink-soft: #6b5f4f;
+  --line: #e2d6bf;
+  --accent: #b85c38;
+  --room: #16130f;
+  --room-card: #211c16;
+  --room-line: #3a332a;
+
+  --sticky-peach: #f2dfb0;
+  --sticky-sage: #cdd6c4;
+  --sticky-blush: #eecdbb;
+  --sticky-cream: #f7f2e5;
+  --sticky-lav: #dad2e6;
+
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-room: var(--room);
+  --color-room-card: var(--room-card);
+  --color-room-line: var(--room-line);
+  --color-sticky-peach: var(--sticky-peach);
+  --color-sticky-sage: var(--sticky-sage);
+  --color-sticky-blush: var(--sticky-blush);
+  --color-sticky-cream: var(--sticky-cream);
+  --color-sticky-lav: var(--sticky-lav);
+  --font-display: var(--font-serif);
+  --font-body: var(--font-sans);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-serif);
+}
+
+::selection {
+  background: var(--sticky-peach);
+  color: var(--ink);
+}
+
+.paper-texture {
+  background-image: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.035) 1px, transparent 0);
+  background-size: 22px 22px;
+}

@@ -16,8 +16,7 @@ export default async function WritePage({
 
   return (
     <div className="px-4 sm:px-10 py-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display text-xl">Chapters</h2>
+      <div className="flex items-center justify-end mb-6">
         <NewDocumentModal projectId={projectId} />
       </div>
 

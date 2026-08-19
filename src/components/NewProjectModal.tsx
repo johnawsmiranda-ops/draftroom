@@ -46,6 +46,14 @@ export function NewProjectModal({
           </button>
         </div>
 
+        <div className="mt-4 flex items-center gap-2 flex-wrap rounded-lg bg-white/5 border border-room-line/40 px-3 py-2 text-[11px] text-paper/60">
+          <span className={title.trim() ? "text-paper" : "text-paper font-medium"}>1. Add a project name</span>
+          <span className="text-paper/30">→</span>
+          <span className={title.trim() ? "text-paper font-medium" : "text-paper/40"}>2. Pick a template (optional)</span>
+          <span className="text-paper/30">→</span>
+          <span className={title.trim() ? "text-paper/70" : "text-paper/40"}>3. Create project</span>
+        </div>
+
         <div className="mt-6">
           <label className="text-xs uppercase tracking-[0.15em] text-paper/50 block mb-2">1. Project Name</label>
           <input
@@ -57,6 +65,9 @@ export function NewProjectModal({
             placeholder="Enter project title…"
             className="w-full bg-white/5 border border-room-line/60 rounded-xl px-4 py-3 text-sm outline-none focus:border-paper/40"
           />
+          <p className="text-[11px] text-paper/40 mt-2">
+            This is the only required step — pick a template below or skip straight to Create Project.
+          </p>
         </div>
 
         <div className="mt-6">

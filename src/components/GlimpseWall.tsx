@@ -43,6 +43,11 @@ export function GlimpseWall({ glimpses }: { glimpses: Glimpse[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   function onPointerDown(e: React.PointerEvent, id: string, x: number, y: number) {
+    // Let clicks on the card's own buttons (pin/copy/delete) through without
+    // starting a drag — otherwise pointer capture on the button can swallow
+    // the click that follows, making those buttons feel unresponsive.
+    if ((e.target as HTMLElement).closest("button")) return;
+
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     dragState.current = {

@@ -7,10 +7,28 @@ import { Avatar } from "@/components/Avatar";
 
 const TARGET_SIZE = 256;
 
+function isHeic(file: File) {
+  const type = file.type.toLowerCase();
+  const name = file.name.toLowerCase();
+  // iPhone/Mac photo libraries default to HEIC, which no browser except
+  // Safari can decode into an <img>/<canvas> — Chrome's file picker often
+  // reports an empty MIME type for these too, so we also check the
+  // extension rather than trusting file.type alone.
+  return type === "image/heic" || type === "image/heif" || name.endsWith(".heic") || name.endsWith(".heif");
+}
+
 // Resize+crop to a small square client-side before it ever reaches the
 // server — keeps the stored data URL small since avatars are saved inline
 // rather than in dedicated blob storage.
-function fileToSquareDataUrl(file: File): Promise<string> {
+async function fileToSquareDataUrl(file: File): Promise<string> {
+  let workingFile: File | Blob = file;
+
+  if (isHeic(file)) {
+    const heic2any = (await import("heic2any")).default;
+    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+    workingFile = Array.isArray(converted) ? converted[0] : converted;
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     const reader = new FileReader();
@@ -34,7 +52,7 @@ function fileToSquareDataUrl(file: File): Promise<string> {
       img.src = reader.result as string;
     };
     reader.onerror = () => reject(new Error("Couldn't read that file"));
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(workingFile);
   });
 }
 
@@ -55,7 +73,7 @@ export function AvatarUploader({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith("image/") && !isHeic(file)) {
       setError("Please choose an image file.");
       return;
     }
@@ -70,8 +88,14 @@ export function AvatarUploader({
           else router.refresh();
         });
       });
-    } catch {
-      setError("Couldn't process that image — try a different one.");
+    } catch (err) {
+      setError(
+        isHeic(file)
+          ? "Couldn't convert that HEIC photo — try exporting it as JPEG first."
+          : "Couldn't process that image — try a different one.",
+      );
+      // eslint-disable-next-line no-console
+      console.error(err);
     }
   }
 

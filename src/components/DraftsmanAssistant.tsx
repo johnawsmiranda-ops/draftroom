@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "draftroom.assistantPosition";
-const AVATAR_SIZE = 64;
+// Matches the exported artwork's aspect ratio (320x540) so the overlaid
+// eye positions below stay lined up with the actual eyes in the image.
+const AVATAR_WIDTH = 84;
+const AVATAR_HEIGHT = 142;
 const MARGIN = 20;
 
 function timeGreeting(name?: string | null) {
@@ -40,6 +43,10 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   const [open, setOpen] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  // Every so often the whole figure does a little "gesture" wiggle — the
+  // closest we can get to a hand-wave from a single flat piece of art
+  // without separate hand/pose sprites.
+  const [isGesturing, setIsGesturing] = useState(false);
   const dragState = useRef<{
     dragging: boolean;
     moved: boolean;
@@ -66,8 +73,8 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     }
     if (!initial) {
       initial = {
-        x: window.innerWidth - AVATAR_SIZE - MARGIN,
-        y: window.innerHeight - AVATAR_SIZE - MARGIN,
+        x: window.innerWidth - AVATAR_WIDTH - MARGIN,
+        y: window.innerHeight - AVATAR_HEIGHT - MARGIN,
       };
     }
     setPosition(initial);
@@ -81,9 +88,18 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // Once a minute, play a brief "doing something" gesture animation.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setIsGesturing(true);
+      window.setTimeout(() => setIsGesturing(false), 1400);
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   function clampToViewport(p: Point): Point {
-    const maxX = window.innerWidth - AVATAR_SIZE - 4;
-    const maxY = window.innerHeight - AVATAR_SIZE - 4;
+    const maxX = window.innerWidth - AVATAR_WIDTH - 4;
+    const maxY = window.innerHeight - AVATAR_HEIGHT - 4;
     return { x: Math.min(Math.max(p.x, 4), Math.max(maxX, 4)), y: Math.min(Math.max(p.y, 4), Math.max(maxY, 4)) };
   }
 
@@ -140,10 +156,14 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   const openLeft = position.x > window.innerWidth / 2;
   const message = tipIndex === 0 ? timeGreeting(userName) : TIPS[tipIndex - 1];
 
+  let motionClass = "animate-draftsman-bob";
+  if (isDragging) motionClass = "";
+  else if (isGesturing) motionClass = "animate-draftsman-gesture";
+
   return (
     <div
       className="fixed z-[70] select-none"
-      style={{ left: position.x, top: position.y, width: AVATAR_SIZE, height: AVATAR_SIZE }}
+      style={{ left: position.x, top: position.y, width: AVATAR_WIDTH, height: AVATAR_HEIGHT }}
     >
       {open && (
         <div
@@ -185,18 +205,29 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        className="w-16 h-16 rounded-full bg-[#efe6d8] border border-room-line/40 shadow-md cursor-grab active:cursor-grabbing flex items-center justify-center overflow-hidden hover:shadow-lg transition-shadow touch-none"
+        className="relative w-full h-full flex items-end justify-center cursor-grab active:cursor-grabbing touch-none bg-transparent"
         title="Draftsman — drag me, or click for a nudge"
       >
-        <div className={isDragging ? "" : "animate-draftsman-bob"}>
+        <div className={`relative ${motionClass}`} style={{ width: AVATAR_WIDTH, height: AVATAR_HEIGHT }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/draftsman.png"
             alt="Draftsman"
-            width={64}
-            height={64}
+            width={AVATAR_WIDTH}
+            height={AVATAR_HEIGHT}
             draggable={false}
-            className="w-[52px] h-[52px] object-contain object-top pointer-events-none select-none"
+            className="w-full h-full object-contain drop-shadow-md pointer-events-none select-none"
+          />
+          {/* Two small skin-toned ellipses parked over the eyes, hidden by
+              default and flashed briefly by the blink keyframes below —
+              faked from the flat artwork rather than a real eyelid layer. */}
+          <span
+            className="animate-draftsman-blink absolute rounded-full bg-[#f7e1c2]"
+            style={{ width: 13, height: 9, left: 26, top: 54 }}
+          />
+          <span
+            className="animate-draftsman-blink absolute rounded-full bg-[#f7e1c2]"
+            style={{ width: 13, height: 9, left: 55, top: 54 }}
           />
         </div>
       </button>

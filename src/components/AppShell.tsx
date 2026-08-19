@@ -3,6 +3,7 @@
 import { ViewModeProvider, useViewMode } from "@/lib/view-mode";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileShell } from "@/components/MobileShell";
+import { DraftsmanAssistant } from "@/components/DraftsmanAssistant";
 
 type Project = { id: string; title: string };
 
@@ -51,6 +52,7 @@ export function AppShell({
       <ShellSwitcher userName={userName} avatarUrl={avatarUrl} projects={projects}>
         {children}
       </ShellSwitcher>
+      <DraftsmanAssistant userName={userName} />
     </ViewModeProvider>
   );
 }

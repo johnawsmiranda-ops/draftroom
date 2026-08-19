@@ -25,6 +25,11 @@ const TIPS = [
   "Even 50 words today still counts as showing up.",
   "Try Lights On / Lights Off if the page feels too bright — or too quiet.",
   "You can drag me anywhere out of your way, by the way.",
+  "Just so you know — I'm not an AI. I can't write a word of this for you. I'm just here to cheer you on.",
+  "No generating, no suggestions, no autocomplete. Just me, rooting for you from the corner of the screen.",
+  "I don't have opinions on your plot. I just think it's great that you're working on it.",
+  "Whatever you wrote today — it's real, it's yours, and that's worth celebrating.",
+  "I can't help with the words. I can just say: you showed up, and that matters.",
 ];
 
 type Point = { x: number; y: number };
@@ -34,6 +39,7 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   const [position, setPosition] = useState<Point | null>(null);
   const [open, setOpen] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const dragState = useRef<{
     dragging: boolean;
     moved: boolean;
@@ -92,6 +98,7 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   function onPointerDown(e: React.PointerEvent) {
     if (!position) return;
     (e.target as Element).setPointerCapture?.(e.pointerId);
+    setIsDragging(true);
     dragState.current = {
       dragging: true,
       moved: false,
@@ -115,6 +122,7 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     const wasMoved = dragState.current.moved;
     dragState.current.dragging = false;
     dragState.current.moved = false;
+    setIsDragging(false);
     if (position) savePosition(position);
     if (!wasMoved) {
       setOpen((o) => !o);
@@ -177,40 +185,21 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        className="w-16 h-16 rounded-full bg-[#efe6d8] border border-room-line/40 shadow-md cursor-grab active:cursor-grabbing flex items-center justify-center hover:shadow-lg transition-shadow touch-none"
+        className="w-16 h-16 rounded-full bg-[#efe6d8] border border-room-line/40 shadow-md cursor-grab active:cursor-grabbing flex items-center justify-center overflow-hidden hover:shadow-lg transition-shadow touch-none"
         title="Draftsman — drag me, or click for a nudge"
       >
-        <DraftsmanFace />
+        <div className={isDragging ? "" : "animate-draftsman-bob"}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/draftsman.png"
+            alt="Draftsman"
+            width={64}
+            height={64}
+            draggable={false}
+            className="w-[52px] h-[52px] object-contain object-top pointer-events-none select-none"
+          />
+        </div>
       </button>
     </div>
-  );
-}
-
-function DraftsmanFace() {
-  return (
-    <svg width="44" height="44" viewBox="0 0 64 64" fill="none">
-      {/* hoodie shoulders */}
-      <path d="M8 60c0-10 6-16 10-18h28c4 2 10 8 10 18" fill="#e7ddc9" />
-      <path d="M8 60c0-10 6-16 10-18h28c4 2 10 8 10 18" stroke="#3a3128" strokeWidth="1.5" strokeLinejoin="round" />
-      {/* hood collar */}
-      <path d="M22 44c2 4 6 6 10 6s8-2 10-6" stroke="#3a3128" strokeWidth="1.5" strokeLinecap="round" />
-      {/* head */}
-      <circle cx="32" cy="28" r="16" fill="#f6e9d8" stroke="#3a3128" strokeWidth="1.5" />
-      {/* hair */}
-      <path
-        d="M16 26c-1-9 6-16 16-16s17 7 16 16c-2-2-4-4-6-4 0-3-2-5-4-5-1 2-3 3-5 3-1-2-3-3-5-2 0 2-2 3-4 3-3 0-6 2-8 5z"
-        fill="#3a2f26"
-      />
-      {/* glasses */}
-      <circle cx="24" cy="29" r="6" fill="none" stroke="#3a3128" strokeWidth="1.6" />
-      <circle cx="40" cy="29" r="6" fill="none" stroke="#3a3128" strokeWidth="1.6" />
-      <path d="M30 29h4" stroke="#3a3128" strokeWidth="1.6" />
-      {/* eyes + smile */}
-      <circle cx="24" cy="29" r="1.6" fill="#3a3128" />
-      <circle cx="40" cy="29" r="1.6" fill="#3a3128" />
-      <path d="M28 37c2 2 6 2 8 0" stroke="#3a3128" strokeWidth="1.6" strokeLinecap="round" />
-      {/* pen badge on hoodie */}
-      <rect x="28" y="50" width="8" height="2.4" rx="1.2" fill="#3a3128" opacity="0.6" />
-    </svg>
   );
 }

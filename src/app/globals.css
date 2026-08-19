@@ -69,3 +69,25 @@ body {
   background-image: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.035) 1px, transparent 0);
   background-size: 22px 22px;
 }
+
+/* Idle "alive" motion for the Draftsman assistant -- a gentle bob + tilt,
+   paused while the person is dragging it (see DraftsmanAssistant.tsx). */
+@keyframes draftsman-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(-3deg);
+  }
+}
+
+.animate-draftsman-bob {
+  animation: draftsman-bob 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-draftsman-bob {
+    animation: none;
+  }
+}

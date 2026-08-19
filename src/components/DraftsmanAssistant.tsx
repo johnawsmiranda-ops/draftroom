@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "draftroom.assistantPosition";
-// Matches the exported artwork's aspect ratio (320x540) so the overlaid
-// eye positions below stay lined up with the actual eyes in the image.
+// Matches the exported artwork's aspect ratio (320x540).
 const AVATAR_WIDTH = 84;
 const AVATAR_HEIGHT = 142;
 const MARGIN = 20;
@@ -35,6 +34,17 @@ const TIPS = [
   "I can't help with the words. I can just say: you showed up, and that matters.",
 ];
 
+// A different little animation each time you click him...
+const CLICK_REACTIONS = [
+  "animate-draftsman-bounce",
+  "animate-draftsman-wiggle",
+  "animate-draftsman-nod",
+  "animate-draftsman-pop",
+];
+// ...and a different one when you drop him after dragging.
+const DRAG_REACTIONS = ["animate-draftsman-shake", "animate-draftsman-pop", "animate-draftsman-nod"];
+const REACTION_DURATION = 850;
+
 type Point = { x: number; y: number };
 
 export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
@@ -43,10 +53,11 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   const [open, setOpen] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  // Every so often the whole figure does a little "gesture" wiggle — the
-  // closest we can get to a hand-wave from a single flat piece of art
-  // without separate hand/pose sprites.
-  const [isGesturing, setIsGesturing] = useState(false);
+  // The one-off animation currently playing in reaction to a click or a
+  // drag-drop, if any — takes priority over the idle bob while it runs.
+  const [reactionClass, setReactionClass] = useState<string | null>(null);
+  const lastReaction = useRef<string | null>(null);
+  const reactionTimeout = useRef<number | null>(null);
   const dragState = useRef<{
     dragging: boolean;
     moved: boolean;
@@ -88,13 +99,10 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Once a minute, play a brief "doing something" gesture animation.
   useEffect(() => {
-    const id = window.setInterval(() => {
-      setIsGesturing(true);
-      window.setTimeout(() => setIsGesturing(false), 1400);
-    }, 60_000);
-    return () => window.clearInterval(id);
+    return () => {
+      if (reactionTimeout.current) window.clearTimeout(reactionTimeout.current);
+    };
   }, []);
 
   function clampToViewport(p: Point): Point {
@@ -110,6 +118,16 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
       // ignore
     }
   }, []);
+
+  function playReaction(pool: string[]) {
+    // Avoid repeating the same animation twice in a row.
+    const choices = pool.filter((c) => c !== lastReaction.current);
+    const pick = (choices.length ? choices : pool)[Math.floor(Math.random() * (choices.length ? choices.length : pool.length))];
+    lastReaction.current = pick;
+    if (reactionTimeout.current) window.clearTimeout(reactionTimeout.current);
+    setReactionClass(pick);
+    reactionTimeout.current = window.setTimeout(() => setReactionClass(null), REACTION_DURATION);
+  }
 
   function onPointerDown(e: React.PointerEvent) {
     if (!position) return;
@@ -140,7 +158,10 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     dragState.current.moved = false;
     setIsDragging(false);
     if (position) savePosition(position);
-    if (!wasMoved) {
+    if (wasMoved) {
+      playReaction(DRAG_REACTIONS);
+    } else {
+      playReaction(CLICK_REACTIONS);
       setOpen((o) => !o);
       setTipIndex(0);
     }
@@ -158,7 +179,7 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
 
   let motionClass = "animate-draftsman-bob";
   if (isDragging) motionClass = "";
-  else if (isGesturing) motionClass = "animate-draftsman-gesture";
+  else if (reactionClass) motionClass = reactionClass;
 
   return (
     <div
@@ -217,17 +238,6 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
             height={AVATAR_HEIGHT}
             draggable={false}
             className="w-full h-full object-contain drop-shadow-md pointer-events-none select-none"
-          />
-          {/* Two small skin-toned ellipses parked over the eyes, hidden by
-              default and flashed briefly by the blink keyframes below —
-              faked from the flat artwork rather than a real eyelid layer. */}
-          <span
-            className="animate-draftsman-blink absolute rounded-full bg-[#f7e1c2]"
-            style={{ width: 13, height: 9, left: 26, top: 54 }}
-          />
-          <span
-            className="animate-draftsman-blink absolute rounded-full bg-[#f7e1c2]"
-            style={{ width: 13, height: 9, left: 55, top: 54 }}
           />
         </div>
       </button>

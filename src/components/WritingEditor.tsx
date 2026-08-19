@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { autosaveChapterAction, createChapterAction } from "@/lib/actions/documents";
 import { AtmospherePlayer } from "@/components/AtmospherePlayer";
 import { ExportMenu } from "@/components/ExportMenu";
+import { WritingFormatPicker } from "@/components/WritingFormatPicker";
+import { getWritingFormat, WritingFormatKey } from "@/lib/writing-formats";
 
 type Chapter = {
   id: string;
@@ -17,6 +19,7 @@ type Chapter = {
 type Doc = {
   id: string;
   title: string;
+  writingFormat: string;
   chapters: Chapter[];
 };
 
@@ -40,6 +43,11 @@ export function WritingEditor({
   const [sessionStart] = useState(() => Date.now());
   const [elapsedMin, setElapsedMin] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [formatKey, setFormatKey] = useState<WritingFormatKey>(
+    (doc.writingFormat as WritingFormatKey) ?? "plain-white",
+  );
+  const [showFormatPicker, setShowFormatPicker] = useState(false);
+  const format = getWritingFormat(formatKey);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -182,6 +190,16 @@ export function WritingEditor({
             {saving === "saving" ? "Saving…" : "Saved"}
           </span>
           <AtmospherePlayer dark={lightsOff} />
+          <button
+            onClick={() => setShowFormatPicker(true)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              lightsOff
+                ? "border-paper/30 text-paper hover:bg-white/10"
+                : "border-line text-ink-soft hover:border-ink hover:text-ink"
+            }`}
+          >
+            Format
+          </button>
           <ExportMenu documentId={doc.id} dark={lightsOff} />
           <button
             onClick={toggleFullscreen}
@@ -215,16 +233,18 @@ export function WritingEditor({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className="flex-1 overflow-y-auto"
+        style={lightsOff ? undefined : { backgroundColor: format.bg, backgroundImage: format.backgroundImage }}
+      >
         <div className="max-w-2xl mx-auto px-6 py-16">
           <div
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning
             onInput={onInput}
-            className={`font-display text-[19px] leading-[1.9] outline-none min-h-[60vh] ${
-              lightsOff ? "text-paper/95" : "text-ink"
-            }`}
+            className="font-display text-[19px] leading-[1.9] outline-none min-h-[60vh]"
+            style={{ color: lightsOff ? "rgba(255,255,255,0.95)" : format.text }}
           />
         </div>
       </div>
@@ -261,6 +281,15 @@ export function WritingEditor({
           <span>{wordCount.toLocaleString()} words</span>
         </div>
       </div>
+
+      {showFormatPicker && (
+        <WritingFormatPicker
+          documentId={doc.id}
+          current={formatKey}
+          onClose={() => setShowFormatPicker(false)}
+          onApplied={setFormatKey}
+        />
+      )}
     </div>
   );
 }

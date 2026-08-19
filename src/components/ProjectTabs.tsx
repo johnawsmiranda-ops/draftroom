@@ -8,7 +8,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
 
   const tabs = [
     { label: "Glimpses", href: `/projects/${projectId}/glimpses` },
-    { label: "Writing", href: `/projects/${projectId}/write` },
+    { label: "Chapters", href: `/projects/${projectId}/write` },
     { label: "Writing Dates", href: `/projects/${projectId}/writing-dates` },
   ];
 

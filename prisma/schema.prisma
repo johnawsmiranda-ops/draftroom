@@ -73,12 +73,13 @@ model Glimpse {
 }
 
 model Document {
-  id        String   @id @default(cuid())
-  userId    String
-  projectId String
-  title     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  userId        String
+  projectId     String
+  title         String
+  writingFormat String   @default("plain-white")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)

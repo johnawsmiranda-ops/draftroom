@@ -1,5 +1,6 @@
 import { listDocuments } from "@/lib/actions/documents";
-import { NewDocumentInline } from "@/components/NewDocumentInline";
+import { NewDocumentModal } from "@/components/NewDocumentModal";
+import { DocumentCard } from "@/components/DocumentCard";
 
 function wordsOf(doc: { chapters: { wordCount: number }[] }) {
   return doc.chapters.reduce((sum, c) => sum + c.wordCount, 0);
@@ -16,8 +17,8 @@ export default async function WritePage({
   return (
     <div className="px-4 sm:px-10 py-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display text-xl">Your writing</h2>
-        <NewDocumentInline projectId={projectId} />
+        <h2 className="font-display text-xl">Chapters</h2>
+        <NewDocumentModal projectId={projectId} />
       </div>
 
       {documents.length === 0 ? (
@@ -28,19 +29,14 @@ export default async function WritePage({
       ) : (
         <div className="space-y-2">
           {documents.map((doc) => (
-            <a
+            <DocumentCard
               key={doc.id}
-              href={`/projects/${projectId}/write/${doc.id}`}
-              className="flex items-center justify-between rounded-xl border border-line bg-card px-5 py-4 hover:-translate-y-0.5 transition-transform"
-            >
-              <div>
-                <p className="font-display text-lg">{doc.title}</p>
-                <p className="text-xs text-ink-soft mt-0.5">
-                  {doc.chapters.length} {doc.chapters.length === 1 ? "chapter" : "chapters"}
-                </p>
-              </div>
-              <span className="text-xs text-ink-soft">{wordsOf(doc)} words</span>
-            </a>
+              id={doc.id}
+              projectId={projectId}
+              title={doc.title}
+              chapterCount={doc.chapters.length}
+              words={wordsOf(doc)}
+            />
           ))}
         </div>
       )}

@@ -15,6 +15,10 @@ type SpeechRecognitionLike = {
 
 const PROMPTS = ["Quick note", "Dialogue", "Scene", "Question"];
 
+// Say this at the end of a voice glimpse to stop listening, save it, and pin
+// it automatically — a hands-free way to close out a thought.
+const VOICE_SAVE_PHRASE = "saved glimpse";
+
 export function GlimpseComposer({ projectId }: { projectId: string }) {
   const [mode, setMode] = useState<"text" | "voice">("text");
   const [text, setText] = useState("");
@@ -22,6 +26,33 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
   const [pending, startTransition] = useTransition();
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  function submit(opts?: { text?: string; pinned?: boolean }) {
+    const value = (opts?.text ?? text).trim();
+    if (!value) return;
+
+    // Stop any in-progress voice capture first, so a stray word picked up
+    // after saving never sneaks into the glimpse or keeps the mic open.
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+    }
+
+    const fd = new FormData();
+    fd.set("projectId", projectId);
+    fd.set("type", mode);
+    if (mode === "voice") {
+      fd.set("transcript", value);
+    } else {
+      fd.set("content", value);
+    }
+    if (opts?.pinned) fd.set("pinned", "true");
+
+    startTransition(() => {
+      createGlimpseAction(fd);
+    });
+    setText("");
+  }
 
   function toggleListening() {
     const w = window as unknown as {
@@ -52,6 +83,17 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
       for (let i = 0; i < results.length; i++) {
         finalText += results[i][0].transcript;
       }
+
+      const trimmed = finalText.trim();
+      if (trimmed.toLowerCase().endsWith(VOICE_SAVE_PHRASE)) {
+        const spoken = trimmed.slice(0, trimmed.length - VOICE_SAVE_PHRASE.length).trim();
+        recognitionRef.current?.stop();
+        setListening(false);
+        setText(spoken);
+        submit({ text: spoken, pinned: true });
+        return;
+      }
+
       setText(finalText);
     };
     recognition.onend = () => setListening(false);
@@ -63,30 +105,6 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
 
   function handlePrompt(p: string) {
     setText((t) => (t ? `${t}\n${p}: ` : `${p}: `));
-  }
-
-  function submit() {
-    if (!text.trim()) return;
-
-    // Stop any in-progress voice capture first, so a stray word picked up
-    // after clicking Save never sneaks into the glimpse or keeps the mic open.
-    if (listening) {
-      recognitionRef.current?.stop();
-      setListening(false);
-    }
-
-    const fd = new FormData();
-    fd.set("projectId", projectId);
-    fd.set("type", mode);
-    if (mode === "voice") {
-      fd.set("transcript", text);
-    } else {
-      fd.set("content", text);
-    }
-    startTransition(() => {
-      createGlimpseAction(fd);
-    });
-    setText("");
   }
 
   return (
@@ -143,13 +161,18 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
           )}
         </div>
         <button
-          onClick={submit}
+          onClick={() => submit()}
           disabled={pending || !text.trim()}
           className="text-xs rounded-full bg-ink text-paper px-4 py-2 hover:opacity-90 transition-opacity disabled:opacity-40"
         >
           Save glimpse
         </button>
       </div>
+      {mode === "voice" && listening && (
+        <p className="text-[11px] text-ink-soft mt-2">
+          Say <span className="italic">&ldquo;saved glimpse&rdquo;</span> to stop, save, and pin it.
+        </p>
+      )}
       <form ref={formRef} className="hidden" />
     </div>
   );

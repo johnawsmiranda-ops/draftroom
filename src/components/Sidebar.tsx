@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listProjects } from "@/lib/actions/projects";
 import { LogoutButton } from "@/components/LogoutButton";
 import { NewProjectInline } from "@/components/NewProjectInline";
+import { SidebarProjectRow } from "@/components/DeletableProjectLink";
 
 export async function Sidebar({ userName }: { userName?: string | null }) {
   const projects = await listProjects();
@@ -32,14 +33,7 @@ export async function Sidebar({ userName }: { userName?: string | null }) {
       </div>
       <div className="px-3 mt-2 space-y-0.5 text-sm overflow-y-auto flex-1">
         {projects.map((p) => (
-          <Link
-            key={p.id}
-            href={`/projects/${p.id}/glimpses`}
-            className="flex items-center px-3 py-2 rounded-lg hover:bg-white/5 transition-colors truncate"
-            title={p.title}
-          >
-            {p.title}
-          </Link>
+          <SidebarProjectRow key={p.id} id={p.id} title={p.title} />
         ))}
         <div className="px-1 pt-1">
           <NewProjectInline />

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/current-user";
 import { listProjects } from "@/lib/actions/projects";
 import { NewProjectCard } from "@/components/NewProjectCard";
+import { ProjectCardLink } from "@/components/DeletableProjectLink";
 
 function timeAgo(date: Date) {
   const diff = Date.now() - new Date(date).getTime();
@@ -56,14 +57,12 @@ export default async function HomePage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {projects.map((p) => (
-          <Link
+          <ProjectCardLink
             key={p.id}
-            href={`/projects/${p.id}/glimpses`}
-            className="rounded-2xl bg-card border border-line p-5 hover:-translate-y-0.5 transition-transform"
-          >
-            <p className="font-display text-lg mb-1 truncate">{p.title}</p>
-            <p className="text-xs text-ink-soft">Updated {timeAgo(p.updatedAt)}</p>
-          </Link>
+            id={p.id}
+            title={p.title}
+            subtitle={`Updated ${timeAgo(p.updatedAt)}`}
+          />
         ))}
         <NewProjectCard />
       </div>

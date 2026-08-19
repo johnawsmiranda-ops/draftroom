@@ -37,6 +37,7 @@ export async function createGlimpseAction(formData: FormData) {
   const content = String(formData.get("content") ?? "").trim();
   const type = (String(formData.get("type") ?? "text") as "text" | "voice") || "text";
   const transcript = String(formData.get("transcript") ?? "") || null;
+  const pinned = formData.get("pinned") === "true";
 
   if (!content && !transcript) return;
 
@@ -52,6 +53,7 @@ export async function createGlimpseAction(formData: FormData) {
       transcript: type === "voice" ? transcript : null,
       color: randomColor(),
       rotation: randomTilt(),
+      pinned,
     },
   });
 

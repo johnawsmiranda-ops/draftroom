@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { createGlimpseAction } from "@/lib/actions/glimpses";
 
 type SpeechRecognitionLike = {
@@ -15,17 +15,34 @@ type SpeechRecognitionLike = {
 
 const PROMPTS = ["Quick note", "Dialogue", "Scene", "Question"];
 
-// Say this at the end of a voice glimpse to stop listening, save it, and pin
-// it automatically — a hands-free way to close out a thought.
-const VOICE_SAVE_PHRASE = "saved glimpse";
+// Say any of these at the end of a voice glimpse to stop listening, save it,
+// and pin it automatically — a hands-free way to close out a thought. Listed
+// longest-first so a shorter phrase that's a substring of a longer one (e.g.
+// "glimpse save" inside "save glimpse") doesn't match before the fuller one.
+const VOICE_SAVE_PHRASES = ["saved glimpse", "save glimpse", "glimpse save"];
 
 export function GlimpseComposer({ projectId }: { projectId: string }) {
   const [mode, setMode] = useState<"text" | "voice">("text");
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(true);
   const [pending, startTransition] = useTransition();
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // The Web Speech API's SpeechRecognition interface has no support on iOS at
+  // all — not in Safari, and not in Chrome/Edge/Firefox for iOS either, since
+  // every browser there runs on Apple's WebKit engine under the hood. Check
+  // once on mount so we can show a clear inline explanation instead of a
+  // mic button that silently does nothing when tapped.
+  useEffect(() => {
+    const w = window as unknown as {
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVoiceSupported(Boolean(w.SpeechRecognition ?? w.webkitSpeechRecognition));
+  }, []);
 
   function submit(opts?: { text?: string; pinned?: boolean }) {
     const value = (opts?.text ?? text).trim();
@@ -62,7 +79,7 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
     const Recognition = w.SpeechRecognition ?? w.webkitSpeechRecognition;
 
     if (!Recognition) {
-      alert("Voice capture isn't supported in this browser yet — try Chrome, or type your glimpse.");
+      setVoiceSupported(false);
       return;
     }
 
@@ -85,8 +102,10 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
       }
 
       const trimmed = finalText.trim();
-      if (trimmed.toLowerCase().endsWith(VOICE_SAVE_PHRASE)) {
-        const spoken = trimmed.slice(0, trimmed.length - VOICE_SAVE_PHRASE.length).trim();
+      const lower = trimmed.toLowerCase();
+      const matchedPhrase = VOICE_SAVE_PHRASES.find((phrase) => lower.endsWith(phrase));
+      if (matchedPhrase) {
+        const spoken = trimmed.slice(0, trimmed.length - matchedPhrase.length).trim();
         recognitionRef.current?.stop();
         setListening(false);
         setText(spoken);
@@ -147,7 +166,7 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
               {p}
             </button>
           ))}
-          {mode === "voice" && (
+          {mode === "voice" && voiceSupported && (
             <button
               onClick={toggleListening}
               className={`text-[11px] rounded-full px-2.5 py-1 border transition-colors ${
@@ -170,7 +189,16 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
       </div>
       {mode === "voice" && listening && (
         <p className="text-[11px] text-ink-soft mt-2">
-          Say <span className="italic">&ldquo;saved glimpse&rdquo;</span> to stop, save, and pin it.
+          Say <span className="italic">&ldquo;saved glimpse&rdquo;</span>,{" "}
+          <span className="italic">&ldquo;save glimpse&rdquo;</span>, or{" "}
+          <span className="italic">&ldquo;glimpse save&rdquo;</span> to stop, save, and pin it.
+        </p>
+      )}
+      {mode === "voice" && !voiceSupported && (
+        <p className="text-[11px] text-ink-soft mt-2">
+          Voice capture isn&apos;t available in this browser. Every browser on iPhone or iPad runs on
+          Apple&apos;s engine, which doesn&apos;t support speech recognition yet — this works in Chrome or
+          Edge on desktop, or Chrome on Android. You can still type your glimpse here in the meantime.
         </p>
       )}
       <form ref={formRef} className="hidden" />

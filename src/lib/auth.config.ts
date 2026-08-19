@@ -6,6 +6,7 @@ import type { NextAuthConfig } from "next-auth";
 // which is only ever used in server routes/actions, not middleware.
 export const authConfig = {
   session: { strategy: "jwt" },
+  trustHost: true,
   pages: {
     signIn: "/login",
   },

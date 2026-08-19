@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createProjectFromTemplateAction } from "@/lib/actions/templates";
 import { TEMPLATES, TemplateKey } from "@/lib/templates";
 
@@ -19,6 +19,8 @@ export function NewProjectModal({
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [templateKey, setTemplateKey] = useState<TemplateKey | "">("");
+  const [nameError, setNameError] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   if (!open) return <>{trigger(() => setOpen(true))}</>;
 
@@ -33,6 +35,13 @@ export function NewProjectModal({
         action={createProjectFromTemplateAction}
         className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-room text-paper p-6 sm:p-8"
         onClick={(e) => e.stopPropagation()}
+        onSubmit={(e) => {
+          if (!title.trim()) {
+            e.preventDefault();
+            setNameError(true);
+            titleInputRef.current?.focus();
+          }
+        }}
       >
         <input type="hidden" name="templateKey" value={templateKey} />
 
@@ -57,17 +66,32 @@ export function NewProjectModal({
         <div className="mt-6">
           <label className="text-xs uppercase tracking-[0.15em] text-paper/50 block mb-2">1. Project Name</label>
           <input
+            ref={titleInputRef}
             name="title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (nameError) setNameError(false);
+            }}
             autoFocus
             maxLength={120}
             placeholder="Enter project title…"
-            className="w-full bg-white/5 border border-room-line/60 rounded-xl px-4 py-3 text-sm outline-none focus:border-paper/40"
+            aria-invalid={nameError}
+            className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
+              nameError
+                ? "border-red-400 focus:border-red-400"
+                : "border-room-line/60 focus:border-paper/40"
+            }`}
           />
-          <p className="text-[11px] text-paper/40 mt-2">
-            This is the only required step — pick a template below or skip straight to Create Project.
-          </p>
+          {nameError ? (
+            <p className="text-[11px] text-red-400 mt-2" role="alert">
+              Give your project a name first — that&apos;s the only thing it needs before you can create it.
+            </p>
+          ) : (
+            <p className="text-[11px] text-paper/40 mt-2">
+              This is the only required step — pick a template below or skip straight to Create Project.
+            </p>
+          )}
         </div>
 
         <div className="mt-6">
@@ -109,8 +133,7 @@ export function NewProjectModal({
           </button>
           <button
             type="submit"
-            disabled={!title.trim()}
-            className="text-sm rounded-full bg-accent text-paper px-6 py-2.5 hover:opacity-90 transition-opacity disabled:opacity-40"
+            className="text-sm rounded-full bg-accent text-paper px-6 py-2.5 hover:opacity-90 transition-opacity"
           >
             Create Project
           </button>

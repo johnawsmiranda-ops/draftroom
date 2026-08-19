@@ -167,7 +167,11 @@ export function WritingEditor({
       >
         <div className="flex items-center gap-3 text-sm flex-wrap">
           {!lightsOff && (
-            <a href={`/projects/${projectId}/write`} className="text-ink-soft hover:text-ink">
+            <a
+              href={`/projects/${projectId}/write/${doc.id}`}
+              title="Back to table of contents"
+              className="text-ink-soft hover:text-ink"
+            >
               ←
             </a>
           )}

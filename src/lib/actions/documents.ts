@@ -93,6 +93,59 @@ export async function updateWritingFormatAction(documentId: string, format: stri
   return { ok: true };
 }
 
+export async function updateDocumentTitleAction(documentId: string, title: string) {
+  const user = await requireUser();
+  const trimmed = title.trim();
+  if (!trimmed) return { ok: false };
+
+  const document = await prisma.document.findFirst({ where: { id: documentId, userId: user.id } });
+  if (!document) return { ok: false };
+
+  await prisma.document.update({ where: { id: documentId }, data: { title: trimmed } });
+  revalidatePath(`/projects/${document.projectId}/write`);
+  return { ok: true };
+}
+
+export async function updateChapterTitleAction(chapterId: string, documentId: string, title: string) {
+  const user = await requireUser();
+  const trimmed = title.trim();
+  if (!trimmed) return { ok: false };
+
+  const document = await prisma.document.findFirst({ where: { id: documentId, userId: user.id } });
+  if (!document) return { ok: false };
+
+  await prisma.chapter.update({ where: { id: chapterId }, data: { title: trimmed } });
+  revalidatePath(`/projects/${document.projectId}/write/${documentId}`);
+  return { ok: true };
+}
+
+// Bulk-updates orderIndex for every chapter in a document to match the
+// order the person dragged them into on the Spine (table of contents) view.
+export async function reorderChaptersAction(documentId: string, orderedChapterIds: string[]) {
+  const user = await requireUser();
+  const document = await prisma.document.findFirst({ where: { id: documentId, userId: user.id } });
+  if (!document) return { ok: false };
+
+  await prisma.$transaction(
+    orderedChapterIds.map((id, index) =>
+      prisma.chapter.update({ where: { id, documentId }, data: { orderIndex: index } }),
+    ),
+  );
+
+  revalidatePath(`/projects/${document.projectId}/write/${documentId}`);
+  return { ok: true };
+}
+
+export async function deleteChapterAction(chapterId: string, documentId: string) {
+  const user = await requireUser();
+  const document = await prisma.document.findFirst({ where: { id: documentId, userId: user.id } });
+  if (!document) return { ok: false };
+
+  await prisma.chapter.deleteMany({ where: { id: chapterId, documentId } });
+  revalidatePath(`/projects/${document.projectId}/write/${documentId}`);
+  return { ok: true };
+}
+
 export async function createChapterAction(documentId: string, projectId: string) {
   const user = await requireUser();
   const document = await prisma.document.findFirst({ where: { id: documentId, userId: user.id } });

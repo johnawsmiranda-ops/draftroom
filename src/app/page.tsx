@@ -1,6 +1,8 @@
-import Link from "next/link";
 import { getUser } from "@/lib/current-user";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { PublicHeader } from "@/components/PublicHeader";
+import { PublicFooter } from "@/components/PublicFooter";
 
 export default async function LandingPage() {
   const user = await getUser();
@@ -8,22 +10,9 @@ export default async function LandingPage() {
 
   return (
     <main className="flex-1 flex flex-col bg-paper paper-texture">
-      <header className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto w-full">
-        <span className="font-display text-lg tracking-wide">DRAFTROOM</span>
-        <nav className="flex items-center gap-6 text-sm text-ink-soft">
-          <Link href="/login" className="hover:text-ink transition-colors">
-            Log in
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-full bg-ink text-paper px-4 py-2 hover:opacity-90 transition-opacity"
-          >
-            Start your room
-          </Link>
-        </nav>
-      </header>
+      <PublicHeader />
 
-      <section className="flex-1 flex flex-col items-center justify-center text-center px-6 max-w-3xl mx-auto">
+      <section className="flex-1 flex flex-col items-center justify-center text-center px-6 max-w-3xl mx-auto py-16">
         <p className="text-sm uppercase tracking-[0.25em] text-ink-soft mb-6">
           A creative playground for writers
         </p>
@@ -45,9 +34,7 @@ export default async function LandingPage() {
         </Link>
       </section>
 
-      <footer className="text-center text-xs text-ink-soft/70 py-8">
-        Draftroom — leave something behind.
-      </footer>
+      <PublicFooter />
     </main>
   );
 }

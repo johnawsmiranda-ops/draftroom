@@ -6,7 +6,12 @@ const STORAGE_KEY = "draftroom.assistantPosition";
 // Matches the exported artwork's aspect ratio (320x540).
 const AVATAR_WIDTH = 84;
 const AVATAR_HEIGHT = 142;
+const MINI_WIDTH = 122;
+const MINI_HEIGHT = 40;
 const MARGIN = 20;
+// Auto-collapse to the small pill after this long with no interaction.
+const IDLE_MS = 5 * 60 * 1000;
+const IDLE_CHECK_MS = 15_000;
 
 function timeGreeting(name?: string | null) {
   const hour = new Date().getHours();
@@ -53,17 +58,26 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   const [open, setOpen] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  // Manually hidden (hide button) or auto-collapsed after 5 idle minutes —
+  // either way he shrinks down to a small "Draftsman" pill you can click
+  // to bring him back, rather than disappearing outright.
+  const [minimized, setMinimized] = useState(false);
   // The one-off animation currently playing in reaction to a click or a
   // drag-drop, if any — takes priority over the idle bob while it runs.
   const [reactionClass, setReactionClass] = useState<string | null>(null);
   const lastReaction = useRef<string | null>(null);
   const reactionTimeout = useRef<number | null>(null);
+  const lastActivity = useRef<number>(Date.now());
   const dragState = useRef<{
     dragging: boolean;
     moved: boolean;
     offsetX: number;
     offsetY: number;
   }>({ dragging: false, moved: false, offsetX: 0, offsetY: 0 });
+
+  const size = minimized ? { w: MINI_WIDTH, h: MINI_HEIGHT } : { w: AVATAR_WIDTH, h: AVATAR_HEIGHT };
+  const sizeRef = useRef(size);
+  sizeRef.current = size;
 
   useEffect(() => {
     // One-time sync from localStorage/window size, unavailable during
@@ -99,15 +113,39 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // Re-clamp whenever the widget's footprint changes size (full <-> mini)
+  // so switching states never leaves it hanging off the viewport edge —
+  // reacting to external state (window bounds vs. current size), same
+  // justification as the resize handler above.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPosition((p) => (p ? clampToViewport(p) : p));
+  }, [minimized]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (!minimized && Date.now() - lastActivity.current > IDLE_MS) {
+        setMinimized(true);
+        setOpen(false);
+      }
+    }, IDLE_CHECK_MS);
+    return () => window.clearInterval(id);
+  }, [minimized]);
+
   useEffect(() => {
     return () => {
       if (reactionTimeout.current) window.clearTimeout(reactionTimeout.current);
     };
   }, []);
 
+  function markActive() {
+    lastActivity.current = Date.now();
+  }
+
   function clampToViewport(p: Point): Point {
-    const maxX = window.innerWidth - AVATAR_WIDTH - 4;
-    const maxY = window.innerHeight - AVATAR_HEIGHT - 4;
+    const { w, h } = sizeRef.current;
+    const maxX = window.innerWidth - w - 4;
+    const maxY = window.innerHeight - h - 4;
     return { x: Math.min(Math.max(p.x, 4), Math.max(maxX, 4)), y: Math.min(Math.max(p.y, 4), Math.max(maxY, 4)) };
   }
 
@@ -132,6 +170,7 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   function onPointerDown(e: React.PointerEvent) {
     if (!position) return;
     (e.target as Element).setPointerCapture?.(e.pointerId);
+    markActive();
     setIsDragging(true);
     dragState.current = {
       dragging: true,
@@ -158,6 +197,12 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     dragState.current.moved = false;
     setIsDragging(false);
     if (position) savePosition(position);
+    markActive();
+
+    if (minimized) {
+      if (!wasMoved) setMinimized(false);
+      return;
+    }
     if (wasMoved) {
       playReaction(DRAG_REACTIONS);
     } else {
@@ -167,8 +212,29 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     }
   }
 
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    markActive();
+    if (minimized) {
+      setMinimized(false);
+    } else {
+      playReaction(CLICK_REACTIONS);
+      setOpen((o) => !o);
+      setTipIndex(0);
+    }
+  }
+
   function nextTip() {
+    markActive();
     setTipIndex((i) => (i + 1) % (TIPS.length + 1));
+  }
+
+  function hide(e: React.SyntheticEvent) {
+    e.stopPropagation();
+    markActive();
+    setOpen(false);
+    setMinimized(true);
   }
 
   if (!mounted || !position) return null;
@@ -184,9 +250,9 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   return (
     <div
       className="fixed z-[70] select-none"
-      style={{ left: position.x, top: position.y, width: AVATAR_WIDTH, height: AVATAR_HEIGHT }}
+      style={{ left: position.x, top: position.y, width: size.w, height: size.h }}
     >
-      {open && (
+      {open && !minimized && (
         <div
           className={`absolute bottom-full mb-2 w-64 rounded-2xl border border-line bg-card text-ink shadow-lg p-4 ${
             openLeft ? "right-0" : "left-0"
@@ -198,6 +264,7 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                markActive();
                 setOpen(false);
               }}
               className="text-ink-soft hover:text-ink text-xs shrink-0"
@@ -219,28 +286,57 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
         </div>
       )}
 
-      <button
-        type="button"
-        aria-label="Draftsman, your writing assistant"
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={minimized ? "Show Draftsman, your writing assistant" : "Draftsman, your writing assistant"}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        className="relative w-full h-full flex items-end justify-center cursor-grab active:cursor-grabbing touch-none bg-transparent"
-        title="Draftsman — drag me, or click for a nudge"
+        onKeyDown={onKeyDown}
+        className="relative w-full h-full flex items-end justify-center cursor-grab active:cursor-grabbing touch-none outline-none"
+        title={minimized ? "Draftsman — click to bring him back" : "Draftsman — drag me, or click for a nudge"}
       >
-        <div className={`relative ${motionClass}`} style={{ width: AVATAR_WIDTH, height: AVATAR_HEIGHT }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/draftsman.png"
-            alt="Draftsman"
-            width={AVATAR_WIDTH}
-            height={AVATAR_HEIGHT}
-            draggable={false}
-            className="w-full h-full object-contain drop-shadow-md pointer-events-none select-none"
-          />
-        </div>
-      </button>
+        {minimized ? (
+          <div className="flex items-center gap-2 w-full h-full rounded-full bg-card border border-line shadow-md pl-1 pr-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/draftsman.png"
+              alt=""
+              width={32}
+              height={32}
+              draggable={false}
+              className="w-8 h-8 rounded-full object-cover object-top pointer-events-none select-none shrink-0"
+            />
+            <span className="text-xs font-display text-ink truncate">Draftsman</span>
+          </div>
+        ) : (
+          <div className="group/mascot relative" style={{ width: AVATAR_WIDTH, height: AVATAR_HEIGHT }}>
+            <div className={`relative ${motionClass}`} style={{ width: AVATAR_WIDTH, height: AVATAR_HEIGHT }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/draftsman.png"
+                alt="Draftsman"
+                width={AVATAR_WIDTH}
+                height={AVATAR_HEIGHT}
+                draggable={false}
+                className="w-full h-full object-contain drop-shadow-md pointer-events-none select-none"
+              />
+            </div>
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={hide}
+              title="Hide Draftsman"
+              aria-label="Hide Draftsman"
+              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-card border border-line text-ink-soft hover:text-ink hover:border-ink shadow-sm flex items-center justify-center text-[10px] leading-none opacity-70 hover:opacity-100 transition-opacity"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

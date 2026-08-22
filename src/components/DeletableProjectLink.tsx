@@ -1,8 +1,28 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { useState, useTransition } from "react";
 import { deleteProjectAction } from "@/lib/actions/projects";
+
+/**
+ * Rendered inside a <Link>, so it can read that link's navigation state.
+ * Opening a project hits the database before the next screen paints, and
+ * without this the card looks completely inert for that beat — which reads
+ * as "my tap didn't register" and gets people clicking again.
+ */
+function NavigatingOverlay({ rounded }: { rounded: string }) {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <span
+      className={`absolute inset-0 ${rounded} bg-ink/[0.04] ring-2 ring-accent pointer-events-none flex items-center justify-center`}
+    >
+      <span className="text-[11px] text-ink-soft bg-card/90 rounded-full px-2.5 py-1 shadow-sm">
+        Opening…
+      </span>
+    </span>
+  );
+}
 
 function TrashIcon({ className }: { className?: string }) {
   return (
@@ -18,9 +38,19 @@ function TrashIcon({ className }: { className?: string }) {
   );
 }
 
+/** Dark-theme counterpart to the card overlay — a small pulsing dot. */
+function SidebarNavigatingDot() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <span className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent is-busy" />
+  );
+}
+
 // Sidebar row: dark theme, trash icon fades in on hover next to the link.
 export function SidebarProjectRow({ id, title }: { id: string; title: string }) {
   const [pending, startTransition] = useTransition();
+  const [pressed, setPressed] = useState(false);
 
   function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
@@ -37,10 +67,16 @@ export function SidebarProjectRow({ id, title }: { id: string; title: string }) 
     <div className="group/row flex items-center rounded-lg hover:bg-white/5 transition-colors">
       <Link
         href={`/projects/${id}/write`}
-        className="flex-1 min-w-0 px-3 py-2 truncate"
+        onPointerDown={() => setPressed(true)}
+        onPointerUp={() => setPressed(false)}
+        onPointerCancel={() => setPressed(false)}
+        className={`relative flex-1 min-w-0 px-3 py-2 truncate rounded-lg transition-colors ${
+          pressed ? "bg-white/15 text-paper font-medium" : ""
+        }`}
         title={title}
       >
         {title}
+        <SidebarNavigatingDot />
       </Link>
       <button
         onClick={handleDelete}
@@ -66,6 +102,9 @@ export function ProjectCardLink({
 }) {
   const [pending, startTransition] = useTransition();
   const [hover, setHover] = useState(false);
+  // Set on pointer-down so the card reacts on contact, before the router has
+  // even been asked to navigate.
+  const [pressed, setPressed] = useState(false);
 
   function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
@@ -81,12 +120,28 @@ export function ProjectCardLink({
   return (
     <Link
       href={`/projects/${id}/write`}
-      className="relative rounded-2xl bg-card border border-line p-5 hover:-translate-y-0.5 transition-transform"
+      onPointerDown={(e) => {
+        // The trash button lives inside the card; don't light the card up
+        // when the press was aimed at deleting it.
+        if ((e.target as HTMLElement).closest("button")) return;
+        setPressed(true);
+      }}
+      onPointerUp={() => setPressed(false)}
+      onPointerCancel={() => setPressed(false)}
       onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      onMouseLeave={() => {
+        setHover(false);
+        setPressed(false);
+      }}
+      className={`relative rounded-2xl bg-card border p-5 transition-all ${
+        pressed
+          ? "border-accent ring-2 ring-accent shadow-md"
+          : "border-line hover:-translate-y-0.5 hover:shadow-sm"
+      }`}
     >
       <p className="font-display text-lg mb-1 truncate pr-6">{title}</p>
       <p className="text-xs text-ink-soft">{subtitle}</p>
+      <NavigatingOverlay rounded="rounded-2xl" />
       <button
         onClick={handleDelete}
         disabled={pending}

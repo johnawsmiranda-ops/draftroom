@@ -6,5 +6,5 @@ export default async function ProjectIndex({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  redirect(`/projects/${projectId}/glimpses`);
+  redirect(`/projects/${projectId}/write`);
 }

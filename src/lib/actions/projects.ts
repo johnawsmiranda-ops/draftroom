@@ -32,7 +32,7 @@ export async function createProjectAction(formData: FormData) {
   });
 
   revalidatePath("/home");
-  redirect(`/projects/${project.id}/glimpses`);
+  redirect(`/projects/${project.id}/write`);
 }
 
 export async function deleteProjectAction(projectId: string) {

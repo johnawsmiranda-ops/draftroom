@@ -80,7 +80,7 @@ export function ProjectCardLink({
 
   return (
     <Link
-      href={`/projects/${id}/glimpses`}
+      href={`/projects/${id}/write`}
       className="relative rounded-2xl bg-card border border-line p-5 hover:-translate-y-0.5 transition-transform"
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}

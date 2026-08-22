@@ -3,17 +3,16 @@
 import { prisma } from "@/lib/prisma";
 import { getAdminUser } from "@/lib/admin";
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 
 const PAGE_SIZE = 10;
 
 export type AdminStats = {
   totalUsers: number;
   activeUsers: number;
+  disabledUsers: number;
   premiumUsers: number;
-  totalProjects: number;
-  totalDocuments: number;
-  totalGlimpses: number;
-  totalWords: number;
+  adminUsers: number;
   newUsersThisMonth: number;
 };
 
@@ -24,34 +23,20 @@ export async function getAdminStats(): Promise<AdminStats | null> {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [
-    totalUsers,
-    activeUsers,
-    premiumUsers,
-    totalProjects,
-    totalDocuments,
-    totalGlimpses,
-    wordAgg,
-    newUsersThisMonth,
-  ] = await Promise.all([
+  const [totalUsers, activeUsers, premiumUsers, adminUsers, newUsersThisMonth] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { status: "active" } }),
     prisma.user.count({ where: { plan: "premium" } }),
-    prisma.project.count(),
-    prisma.document.count(),
-    prisma.glimpse.count(),
-    prisma.chapter.aggregate({ _sum: { wordCount: true } }),
+    prisma.user.count({ where: { role: "admin" } }),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
   ]);
 
   return {
     totalUsers,
     activeUsers,
+    disabledUsers: totalUsers - activeUsers,
     premiumUsers,
-    totalProjects,
-    totalDocuments,
-    totalGlimpses,
-    totalWords: wordAgg._sum.wordCount ?? 0,
+    adminUsers,
     newUsersThisMonth,
   };
 }
@@ -161,6 +146,37 @@ async function guard() {
   return admin;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Creates an account directly, skipping the public signup flow. The admin
+ * chooses the initial password and passes it to the person out-of-band —
+ * there's no invite email to send it for us.
+ */
+export async function createUserAction(formData: FormData) {
+  await guard();
+
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const plan = String(formData.get("plan") ?? "free") === "premium" ? "premium" : "free";
+  const role = String(formData.get("role") ?? "user") === "admin" ? "admin" : "user";
+
+  if (!name || !email || !password) return { ok: false, error: "Name, email and password are required." };
+  if (!EMAIL_RE.test(email)) return { ok: false, error: "That email address doesn't look right." };
+  if (password.length < 8) return { ok: false, error: "Password must be at least 8 characters." };
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) return { ok: false, error: "An account with that email already exists." };
+
+  await prisma.user.create({
+    data: { name, email, passwordHash: await bcrypt.hash(password, 10), plan, role },
+  });
+
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
 export async function setUserStatusAction(userId: string, status: "active" | "disabled") {
   const admin = await guard();
   // Never let an admin lock themselves out of their own panel.
@@ -186,6 +202,17 @@ export async function setUserRoleAction(userId: string, role: "user" | "admin") 
   }
   await prisma.user.update({ where: { id: userId }, data: { role } });
   revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function setUserPasswordAction(userId: string, password: string) {
+  await guard();
+  if (password.length < 8) return { ok: false, error: "Password must be at least 8 characters." };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: await bcrypt.hash(password, 10) },
+  });
   return { ok: true };
 }
 

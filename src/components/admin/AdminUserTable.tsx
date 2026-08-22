@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import {
   deleteUserAction,
+  setUserPasswordAction,
   setUserPlanAction,
   setUserRoleAction,
   setUserStatusAction,
@@ -75,6 +76,18 @@ function RowMenu({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
               className="block w-full text-left px-4 py-2.5 hover:bg-paper-deep border-t border-line"
             >
               {user.role === "admin" ? "Revoke admin" : "Make admin"}
+            </button>
+            <button
+              onClick={() => {
+                const pw = prompt(
+                  `Set a new password for ${user.email}.\nYou'll need to pass it to them yourself — nothing is emailed.`,
+                );
+                if (!pw) return;
+                run(() => setUserPasswordAction(user.id, pw));
+              }}
+              className="block w-full text-left px-4 py-2.5 hover:bg-paper-deep border-t border-line"
+            >
+              Reset password
             </button>
             <button
               onClick={() => {

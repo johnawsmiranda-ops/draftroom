@@ -21,6 +21,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
         if (!user) return null;
 
+        // An admin-disabled account can still hold a valid password, so the
+        // status check has to happen here or disabling would do nothing.
+        if (user.status === "disabled") return null;
+
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 

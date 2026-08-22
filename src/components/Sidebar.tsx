@@ -11,10 +11,12 @@ export function Sidebar({
   userName,
   avatarUrl,
   projects,
+  isAdmin,
 }: {
   userName?: string | null;
   avatarUrl?: string | null;
   projects: Project[];
+  isAdmin?: boolean;
 }) {
   return (
     <aside className="w-60 shrink-0 bg-room text-paper/90 flex flex-col h-screen sticky top-0">
@@ -41,6 +43,14 @@ export function Sidebar({
         >
           Profile
         </Link>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            Admin
+          </Link>
+        )}
       </nav>
 
       <div className="mt-8 px-6 flex items-center justify-between">

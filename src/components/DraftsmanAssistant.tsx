@@ -62,9 +62,15 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   const { mode } = useViewMode();
   const [mounted, setMounted] = useState(false);
   const [position, setPosition] = useState<Point | null>(null);
-  // Once he's been dragged (or a saved spot was restored) we stop
-  // repositioning him, so switching views never yanks him out of place.
-  const hasCustomPosition = useRef(false);
+  // Until he's actually dragged he is pinned by CSS to the bottom-right
+  // rather than positioned from measured coordinates. On iOS `innerHeight`
+  // reports the layout viewport (it ignores the collapsing URL bar and the
+  // home indicator), so computing a top offset from it drops him into the
+  // middle of the screen on an iPhone. `bottom` + safe-area insets are
+  // resolved by the browser against the *visible* area, which is correct
+  // everywhere without any measuring.
+  const [anchored, setAnchored] = useState(true);
+  const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -94,31 +100,21 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     // server render — same pattern used in view-mode.tsx.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    let initial: Point | null = null;
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as Point;
         if (typeof parsed.x === "number" && typeof parsed.y === "number") {
-          initial = clampToViewport(parsed);
-          hasCustomPosition.current = true;
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setPosition(clampToViewport(parsed));
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setAnchored(false);
         }
       }
     } catch {
       // ignore malformed storage
     }
-    setPosition(initial ?? restingSpot());
   }, []);
-
-  // Re-seat him on the floor line when the view mode resolves or the person
-  // toggles between mobile and desktop — but only while he's still in his
-  // default spot.
-  useEffect(() => {
-    if (hasCustomPosition.current) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPosition(restingSpot());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
 
   useEffect(() => {
     function onResize() {
@@ -165,18 +161,17 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   }
 
   /**
-   * Where he stands before anyone moves him: lower right, feet resting on the
-   * nearest horizontal edge — the mobile tab bar's top edge on phones, the
-   * bottom of the window on desktop — so he reads as standing on a line
-   * rather than floating in the corner.
+   * The CSS offsets for his default spot: lower right, feet resting on the
+   * nearest horizontal edge — the top of the mobile tab bar on phones, the
+   * bottom of the window on desktop. `env(safe-area-inset-bottom)` keeps him
+   * clear of the iPhone home indicator.
    */
-  function restingSpot(): Point {
-    const { w, h } = sizeRef.current;
+  function anchorStyle(): React.CSSProperties {
     const floorOffset = mode === "mobile" ? MOBILE_TAB_BAR : 0;
-    return clampToViewport({
-      x: window.innerWidth - w - MARGIN,
-      y: window.innerHeight - floorOffset - h - FLOOR_GAP,
-    });
+    return {
+      right: MARGIN,
+      bottom: `calc(${floorOffset + FLOOR_GAP}px + env(safe-area-inset-bottom, 0px))`,
+    };
   }
 
   const savePosition = useCallback((p: Point) => {
@@ -198,15 +193,26 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
   }
 
   function onPointerDown(e: React.PointerEvent) {
-    if (!position) return;
+    // While anchored he has no measured coordinates, so take them from where
+    // the browser actually painted him and switch to free positioning.
+    let base = position;
+    if (anchored) {
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      base = { x: rect.left, y: rect.top };
+      setPosition(base);
+      setAnchored(false);
+    }
+    if (!base) return;
+
     (e.target as Element).setPointerCapture?.(e.pointerId);
     markActive();
     setIsDragging(true);
     dragState.current = {
       dragging: true,
       moved: false,
-      offsetX: e.clientX - position.x,
-      offsetY: e.clientY - position.y,
+      offsetX: e.clientX - base.x,
+      offsetY: e.clientY - base.y,
     };
   }
 
@@ -217,7 +223,6 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
       y: e.clientY - dragState.current.offsetY,
     });
     dragState.current.moved = true;
-    hasCustomPosition.current = true;
     setPosition(next);
   }
 
@@ -268,10 +273,12 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     setMinimized(true);
   }
 
-  if (!mounted || !position) return null;
+  if (!mounted) return null;
+  if (!anchored && !position) return null;
 
-  // Bubble opens toward whichever side of the screen has room.
-  const openLeft = position.x > window.innerWidth / 2;
+  // Bubble opens toward whichever side of the screen has room. Anchored means
+  // he's hard against the right edge, so it always opens leftward.
+  const openLeft = anchored ? true : position!.x > window.innerWidth / 2;
   const message = tipIndex === 0 ? timeGreeting(userName) : TIPS[tipIndex - 1];
 
   let motionClass = "animate-draftsman-bob";
@@ -280,8 +287,13 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
 
   return (
     <div
+      ref={rootRef}
       className="fixed z-[70] select-none"
-      style={{ left: position.x, top: position.y, width: size.w, height: size.h }}
+      style={{
+        ...(anchored ? anchorStyle() : { left: position!.x, top: position!.y }),
+        width: size.w,
+        height: size.h,
+      }}
     >
       {open && !minimized && (
         <div

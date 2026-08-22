@@ -199,6 +199,23 @@ body {
   animation: draftsman-shake 0.85s ease-in-out 1;
 }
 
+/* The three settling dots under the loading message. */
+@keyframes draftsman-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.animate-draftsman-dot {
+  animation: draftsman-dot 1.1s ease-in-out infinite;
+}
+
 /* Tap responsiveness.
    `touch-action: manipulation` drops the ~300ms double-tap-to-zoom wait that
    mobile browsers otherwise add before firing a click — that delay is what
@@ -263,7 +280,8 @@ body {
   .animate-draftsman-wiggle,
   .animate-draftsman-nod,
   .animate-draftsman-pop,
-  .animate-draftsman-shake {
+  .animate-draftsman-shake,
+  .animate-draftsman-dot {
     animation: none;
   }
   button:not(:disabled):active,

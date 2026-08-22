@@ -146,3 +146,16 @@ model WritingSession {
   @@index([userId])
   @@index([projectId])
 }
+
+// Messages sent through the public Support page's contact form. Not tied
+// to a user account -- logged-out visitors can reach Support too.
+model SupportMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

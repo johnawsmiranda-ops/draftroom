@@ -149,8 +149,11 @@ export function ManuscriptSpine({
 
   return (
     <div className="px-4 sm:px-10 py-10 max-w-2xl mx-auto">
-      <Link href={`/projects/${projectId}/write`} className="text-xs text-ink-soft hover:text-ink">
-        ← All documents
+      <Link
+        href={`/projects/${projectId}/write/${doc.id}`}
+        className="text-xs text-ink-soft hover:text-ink"
+      >
+        ← Back to writing
       </Link>
 
       <div className="mt-3 mb-8">

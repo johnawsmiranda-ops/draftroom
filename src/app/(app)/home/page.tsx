@@ -6,6 +6,7 @@ import { NewProjectTopButton } from "@/components/NewProjectTopButton";
 import { NewProjectBanner } from "@/components/NewProjectBanner";
 import { NewProjectHomeCard } from "@/components/NewProjectHomeCard";
 import { ProjectCardLink } from "@/components/DeletableProjectLink";
+import { getResumeHref } from "@/lib/resume";
 
 function timeAgo(date: Date) {
   const diff = Date.now() - new Date(date).getTime();
@@ -23,6 +24,8 @@ export default async function HomePage() {
   const projects = await listProjects();
   const firstName = (user.name ?? "").split(" ")[0];
   const hasProjects = projects.length > 0;
+  // Straight back to the chapter they last touched, wherever it lives.
+  const resumeHref = await getResumeHref();
 
   return (
     <main className="px-4 sm:px-10 py-12 max-w-5xl mx-auto">
@@ -40,11 +43,13 @@ export default async function HomePage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-14">
         {hasProjects ? (
           <Link
-            href={`/projects/${projects[0].id}/write`}
+            href={resumeHref ?? `/projects/${projects[0].id}/write`}
             className="rounded-2xl bg-sticky-sage/60 border border-line p-6 hover:-translate-y-0.5 transition-transform"
           >
             <p className="font-display text-xl mb-1">Write</p>
-            <p className="text-sm text-ink-soft">Continue your work.</p>
+            <p className="text-sm text-ink-soft">
+              {resumeHref ? "Pick up where you left off." : "Continue your work."}
+            </p>
           </Link>
         ) : (
           <NewProjectHomeCard kind="write" />

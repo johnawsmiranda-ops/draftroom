@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { listDocuments } from "@/lib/actions/documents";
+import { getResumeHref } from "@/lib/resume";
 import { NewDocumentModal } from "@/components/NewDocumentModal";
 import { DocumentCard } from "@/components/DocumentCard";
 
@@ -14,9 +16,17 @@ export default async function WritePage({
   const { projectId } = await params;
   const documents = await listDocuments(projectId);
 
+  // A list of one isn't a choice — go straight to where they left off. The
+  // list only earns a screen once a project holds more than one manuscript.
+  if (documents.length === 1) {
+    const href = await getResumeHref(projectId);
+    redirect(href ?? `/projects/${projectId}/write/${documents[0].id}`);
+  }
+
   return (
     <div className="px-4 sm:px-10 py-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-end mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-display text-xl">Chapters</h2>
         <NewDocumentModal projectId={projectId} />
       </div>
 

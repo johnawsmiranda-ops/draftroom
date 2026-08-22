@@ -209,11 +209,14 @@ export function WritingEditor({
         <div className="flex items-center gap-3 text-sm flex-wrap">
           {!lightsOff && (
             <a
-              href={`/projects/${projectId}/write/${doc.id}`}
-              title="Back to table of contents"
-              className="text-ink-soft hover:text-ink"
+              href={`/projects/${projectId}/write/${doc.id}/contents`}
+              title="Table of contents — rename and reorder chapters"
+              className="flex items-center gap-1.5 text-ink-soft hover:text-ink"
             >
-              ←
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+                <path d="M4 6h16M4 12h16M4 18h10" strokeLinecap="round" />
+              </svg>
+              <span className="text-xs">Contents</span>
             </a>
           )}
           <span className={lightsOff ? "text-paper/60" : "text-ink-soft"}>{doc.title}</span>

@@ -1,6 +1,6 @@
+import { redirect } from "next/navigation";
 import { getDocumentWithChapters } from "@/lib/actions/documents";
 import { WritingEditor } from "@/components/WritingEditor";
-import { ManuscriptSpine } from "@/components/ManuscriptSpine";
 
 export default async function DocumentPage({
   params,
@@ -13,11 +13,19 @@ export default async function DocumentPage({
   const { chapter } = await searchParams;
   const document = await getDocumentWithChapters(documentId);
 
-  // No chapter selected yet — show the Spine (table of contents) so the
-  // person can see, rename, and reorder every chapter before diving into
-  // one. Picking a chapter there links here again with ?chapter=.
+  // No chapter named — resume the one edited most recently rather than
+  // stopping at a table of contents. The Spine is a place you choose to go
+  // (the "Contents" button in the editor), not a gate on the way to writing.
   if (!chapter) {
-    return <ManuscriptSpine projectId={projectId} document={document} />;
+    const mostRecent = [...document.chapters].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    )[0];
+
+    if (mostRecent) {
+      redirect(`/projects/${projectId}/write/${documentId}?chapter=${mostRecent.id}`);
+    }
+    // A document with no chapters at all — the Spine is the only thing to show.
+    redirect(`/projects/${projectId}/write/${documentId}/contents`);
   }
 
   return <WritingEditor projectId={projectId} document={document} initialChapterId={chapter} />;

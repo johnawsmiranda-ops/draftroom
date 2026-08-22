@@ -43,8 +43,11 @@ export function GlimpseView({ projectId, glimpses }: { projectId: string; glimps
               setView("wall");
               setUserChose(true);
             }}
-            className={`text-xs px-3.5 py-1.5 rounded-full transition-colors ${
-              view === "wall" ? "bg-card shadow-sm text-ink" : "text-ink-soft"
+            aria-pressed={view === "wall"}
+            className={`text-xs px-3.5 py-1.5 rounded-full transition-all ${
+              view === "wall"
+                ? "bg-card shadow-md text-ink font-semibold"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             Wall
@@ -54,8 +57,11 @@ export function GlimpseView({ projectId, glimpses }: { projectId: string; glimps
               setView("timeline");
               setUserChose(true);
             }}
-            className={`text-xs px-3.5 py-1.5 rounded-full transition-colors ${
-              view === "timeline" ? "bg-card shadow-sm text-ink" : "text-ink-soft"
+            aria-pressed={view === "timeline"}
+            className={`text-xs px-3.5 py-1.5 rounded-full transition-all ${
+              view === "timeline"
+                ? "bg-card shadow-md text-ink font-semibold"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             Timeline

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { createProjectFromTemplateAction } from "@/lib/actions/templates";
 import { TEMPLATES, TemplateKey } from "@/lib/templates";
 
@@ -19,8 +19,7 @@ export function NewProjectModal({
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [templateKey, setTemplateKey] = useState<TemplateKey | "">("");
-  const [nameError, setNameError] = useState(false);
-  const titleInputRef = useRef<HTMLInputElement>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   if (!open) return <>{trigger(() => setOpen(true))}</>;
 
@@ -33,15 +32,9 @@ export function NewProjectModal({
     >
       <form
         action={createProjectFromTemplateAction}
+        onSubmit={() => setSubmitting(true)}
         className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-room text-paper p-6 sm:p-8"
         onClick={(e) => e.stopPropagation()}
-        onSubmit={(e) => {
-          if (!title.trim()) {
-            e.preventDefault();
-            setNameError(true);
-            titleInputRef.current?.focus();
-          }
-        }}
       >
         <input type="hidden" name="templateKey" value={templateKey} />
 
@@ -55,43 +48,17 @@ export function NewProjectModal({
           </button>
         </div>
 
-        <div className="mt-4 flex items-center gap-2 flex-wrap rounded-lg bg-white/5 border border-room-line/40 px-3 py-2 text-[11px] text-paper/60">
-          <span className={title.trim() ? "text-paper" : "text-paper font-medium"}>1. Add a project name</span>
-          <span className="text-paper/30">→</span>
-          <span className={title.trim() ? "text-paper font-medium" : "text-paper/40"}>2. Pick a template (optional)</span>
-          <span className="text-paper/30">→</span>
-          <span className={title.trim() ? "text-paper/70" : "text-paper/40"}>3. Create project</span>
-        </div>
-
         <div className="mt-6">
           <label className="text-xs uppercase tracking-[0.15em] text-paper/50 block mb-2">1. Project Name</label>
           <input
-            ref={titleInputRef}
             name="title"
             value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              if (nameError) setNameError(false);
-            }}
+            onChange={(e) => setTitle(e.target.value)}
             autoFocus
             maxLength={120}
             placeholder="Enter project title…"
-            aria-invalid={nameError}
-            className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-sm outline-none transition-colors ${
-              nameError
-                ? "border-red-400 focus:border-red-400"
-                : "border-room-line/60 focus:border-paper/40"
-            }`}
+            className="w-full bg-white/5 border border-room-line/60 rounded-xl px-4 py-3 text-sm outline-none focus:border-paper/40"
           />
-          {nameError ? (
-            <p className="text-[11px] text-red-400 mt-2" role="alert">
-              Give your project a name first — that&apos;s the only thing it needs before you can create it.
-            </p>
-          ) : (
-            <p className="text-[11px] text-paper/40 mt-2">
-              This is the only required step — pick a template below or skip straight to Create Project.
-            </p>
-          )}
         </div>
 
         <div className="mt-6">
@@ -106,12 +73,26 @@ export function NewProjectModal({
                   key={opt.label}
                   type="button"
                   onClick={() => setTemplateKey(opt.key)}
-                  className={`text-left rounded-xl border-2 p-3 transition-colors ${
-                    active ? "border-accent bg-white/5" : "border-room-line/50 hover:border-room-line"
+                  aria-pressed={active}
+                  className={`relative text-left rounded-xl border-2 p-3 transition-all ${
+                    active
+                      ? "border-accent bg-accent/15 shadow-lg -translate-y-0.5"
+                      : "border-room-line/50 hover:border-room-line"
                   }`}
                 >
-                  <p className="text-xs font-medium">{opt.label}</p>
-                  <p className="text-[11px] text-paper/50 mt-1">{opt.description}</p>
+                  {active && (
+                    <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-accent flex items-center justify-center">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5">
+                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  )}
+                  <p className={`text-xs pr-5 ${active ? "font-semibold text-paper" : "font-medium"}`}>
+                    {opt.label}
+                  </p>
+                  <p className={`text-[11px] mt-1 ${active ? "text-paper/70" : "text-paper/50"}`}>
+                    {opt.description}
+                  </p>
                 </button>
               );
             })}
@@ -133,9 +114,12 @@ export function NewProjectModal({
           </button>
           <button
             type="submit"
-            className="text-sm rounded-full bg-accent text-paper px-6 py-2.5 hover:opacity-90 transition-opacity"
+            disabled={!title.trim() || submitting}
+            className={`text-sm rounded-full bg-accent text-paper px-6 py-2.5 shadow-md hover:opacity-90 transition-opacity disabled:opacity-40 ${
+              submitting ? "is-busy" : ""
+            }`}
           >
-            Create Project
+            {submitting ? "Creating…" : "Create Project"}
           </button>
         </div>
       </form>

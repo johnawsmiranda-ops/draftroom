@@ -13,6 +13,7 @@ export function NewDocumentModal({ projectId }: { projectId: string }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [templateKey, setTemplateKey] = useState<TemplateKey | "">("");
+  const [submitting, setSubmitting] = useState(false);
 
   if (!open) {
     return (
@@ -34,6 +35,7 @@ export function NewDocumentModal({ projectId }: { projectId: string }) {
     >
       <form
         action={createDocumentWithTemplateAction}
+        onSubmit={() => setSubmitting(true)}
         className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-room text-paper p-6 sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
@@ -75,12 +77,26 @@ export function NewDocumentModal({ projectId }: { projectId: string }) {
                   key={opt.label}
                   type="button"
                   onClick={() => setTemplateKey(opt.key)}
-                  className={`text-left rounded-xl border-2 p-3 transition-colors ${
-                    active ? "border-accent bg-white/5" : "border-room-line/50 hover:border-room-line"
+                  aria-pressed={active}
+                  className={`relative text-left rounded-xl border-2 p-3 transition-all ${
+                    active
+                      ? "border-accent bg-accent/15 shadow-lg -translate-y-0.5"
+                      : "border-room-line/50 hover:border-room-line"
                   }`}
                 >
-                  <p className="text-xs font-medium">{opt.label}</p>
-                  <p className="text-[11px] text-paper/50 mt-1">{opt.description}</p>
+                  {active && (
+                    <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-accent flex items-center justify-center">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5">
+                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  )}
+                  <p className={`text-xs pr-5 ${active ? "font-semibold text-paper" : "font-medium"}`}>
+                    {opt.label}
+                  </p>
+                  <p className={`text-[11px] mt-1 ${active ? "text-paper/70" : "text-paper/50"}`}>
+                    {opt.description}
+                  </p>
                 </button>
               );
             })}
@@ -102,10 +118,12 @@ export function NewDocumentModal({ projectId }: { projectId: string }) {
           </button>
           <button
             type="submit"
-            disabled={!title.trim()}
-            className="text-sm rounded-full bg-accent text-paper px-6 py-2.5 hover:opacity-90 transition-opacity disabled:opacity-40"
+            disabled={!title.trim() || submitting}
+            className={`text-sm rounded-full bg-accent text-paper px-6 py-2.5 shadow-md hover:opacity-90 transition-opacity disabled:opacity-40 ${
+              submitting ? "is-busy" : ""
+            }`}
           >
-            Create Document
+            {submitting ? "Creating…" : "Create Document"}
           </button>
         </div>
       </form>

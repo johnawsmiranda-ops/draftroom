@@ -59,8 +59,11 @@ export function WritingFormatPicker({
                 key={format.key}
                 onClick={() => choose(format.key)}
                 disabled={pending}
-                className={`text-left rounded-2xl border-2 overflow-hidden transition-colors ${
-                  active ? "border-accent" : "border-room-line/60 hover:border-room-line"
+                aria-pressed={active}
+                className={`text-left rounded-2xl border-2 overflow-hidden transition-all ${
+                  active
+                    ? "border-accent shadow-xl -translate-y-1"
+                    : "border-room-line/60 hover:border-room-line"
                 }`}
               >
                 <div
@@ -87,8 +90,12 @@ export function WritingFormatPicker({
                     {active && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
                   </span>
                   <div>
-                    <p className="text-xs font-medium">{format.label}</p>
-                    <p className="text-[11px] text-paper/50 mt-0.5">{format.description}</p>
+                    <p className={`text-xs ${active ? "font-semibold text-paper" : "font-medium"}`}>
+                      {format.label}
+                    </p>
+                    <p className={`text-[11px] mt-0.5 ${active ? "text-paper/70" : "text-paper/50"}`}>
+                      {format.description}
+                    </p>
                   </div>
                 </div>
               </button>

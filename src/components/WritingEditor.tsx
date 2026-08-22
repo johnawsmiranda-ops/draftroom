@@ -52,6 +52,9 @@ export function WritingEditor({
   );
   const [showFormatPicker, setShowFormatPicker] = useState(false);
   const [isEmpty, setIsEmpty] = useState(isHtmlEmpty(active?.content ?? ""));
+  // Which formatting commands apply at the cursor, so the toolbar can show
+  // what's already on rather than leaving every button looking identical.
+  const [activeCmds, setActiveCmds] = useState<Record<string, boolean>>({});
   const format = getWritingFormat(formatKey);
 
   const editorRef = useRef<HTMLDivElement>(null);
@@ -118,9 +121,47 @@ export function WritingEditor({
     saveTimer.current = setTimeout(doSave, 1200);
   }
 
+  const TOOLBAR_CMDS = [
+    "bold",
+    "italic",
+    "underline",
+    "insertUnorderedList",
+    "insertOrderedList",
+    "justifyLeft",
+    "justifyCenter",
+    "justifyRight",
+    "justifyFull",
+  ];
+
+  const refreshActiveCmds = useCallback(() => {
+    const next: Record<string, boolean> = {};
+    for (const cmd of TOOLBAR_CMDS) {
+      try {
+        next[cmd] = document.queryCommandState(cmd);
+      } catch {
+        next[cmd] = false;
+      }
+    }
+    setActiveCmds(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    function onSelectionChange() {
+      // Only care while the caret is actually inside the editor.
+      const sel = window.getSelection();
+      if (!sel || !editorRef.current) return;
+      if (!editorRef.current.contains(sel.anchorNode)) return;
+      refreshActiveCmds();
+    }
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => document.removeEventListener("selectionchange", onSelectionChange);
+  }, [refreshActiveCmds]);
+
   function exec(cmd: string) {
     document.execCommand(cmd);
     editorRef.current?.focus();
+    refreshActiveCmds();
     onInput();
   }
 
@@ -288,8 +329,15 @@ export function WritingEditor({
                 e.preventDefault();
                 exec(b.cmd);
               }}
-              className={`w-7 h-7 rounded text-xs ${
-                lightsOff ? "text-paper/70 hover:bg-white/10" : "text-ink-soft hover:bg-paper-deep"
+              aria-pressed={Boolean(activeCmds[b.cmd])}
+              className={`w-7 h-7 rounded text-xs transition-colors ${
+                activeCmds[b.cmd]
+                  ? lightsOff
+                    ? "bg-white/20 text-paper font-bold"
+                    : "bg-ink text-paper font-bold"
+                  : lightsOff
+                    ? "text-paper/70 hover:bg-white/10"
+                    : "text-ink-soft hover:bg-paper-deep"
               }`}
             >
               {b.label}
@@ -309,8 +357,15 @@ export function WritingEditor({
                 e.preventDefault();
                 exec(b.cmd);
               }}
-              className={`w-7 h-7 rounded flex items-center justify-center ${
-                lightsOff ? "text-paper/70 hover:bg-white/10" : "text-ink-soft hover:bg-paper-deep"
+              aria-pressed={Boolean(activeCmds[b.cmd])}
+              className={`w-7 h-7 rounded flex items-center justify-center transition-colors ${
+                activeCmds[b.cmd]
+                  ? lightsOff
+                    ? "bg-white/20 text-paper"
+                    : "bg-ink text-paper"
+                  : lightsOff
+                    ? "text-paper/70 hover:bg-white/10"
+                    : "text-ink-soft hover:bg-paper-deep"
               }`}
             >
               {b.cmd === "justifyLeft" && (

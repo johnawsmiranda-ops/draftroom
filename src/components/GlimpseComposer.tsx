@@ -226,16 +226,22 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
       <div className="flex items-center gap-2 mb-3">
         <button
           onClick={() => setMode("text")}
-          className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-            mode === "text" ? "bg-ink text-paper" : "bg-paper-deep text-ink-soft"
+          aria-pressed={mode === "text"}
+          className={`text-xs px-3.5 py-1.5 rounded-full transition-all ${
+            mode === "text"
+              ? "bg-ink text-paper font-semibold shadow-md"
+              : "bg-paper-deep text-ink-soft hover:text-ink"
           }`}
         >
           Text
         </button>
         <button
           onClick={() => setMode("voice")}
-          className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-            mode === "voice" ? "bg-ink text-paper" : "bg-paper-deep text-ink-soft"
+          aria-pressed={mode === "voice"}
+          className={`text-xs px-3.5 py-1.5 rounded-full transition-all ${
+            mode === "voice"
+              ? "bg-ink text-paper font-semibold shadow-md"
+              : "bg-paper-deep text-ink-soft hover:text-ink"
           }`}
         >
           Voice
@@ -264,9 +270,10 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
           {mode === "voice" && voiceSupported && (
             <button
               onClick={toggleListening}
-              className={`text-[11px] rounded-full px-2.5 py-1 border transition-colors ${
+              aria-pressed={listening}
+              className={`text-[11px] rounded-full px-2.5 py-1 border transition-all ${
                 listening
-                  ? "bg-accent text-paper border-accent"
+                  ? "bg-accent text-paper border-accent font-semibold shadow-md is-busy"
                   : "border-line text-ink-soft hover:border-ink hover:text-ink"
               }`}
             >
@@ -277,9 +284,11 @@ export function GlimpseComposer({ projectId }: { projectId: string }) {
         <button
           onClick={() => submit()}
           disabled={pending || !text.trim()}
-          className="text-xs rounded-full bg-ink text-paper px-4 py-2 hover:opacity-90 transition-opacity disabled:opacity-40"
+          className={`text-xs rounded-full bg-ink text-paper px-4 py-2 shadow-sm hover:opacity-90 transition-opacity disabled:opacity-40 ${
+            pending ? "is-busy" : ""
+          }`}
         >
-          Save glimpse
+          {pending ? "Saving…" : "Save glimpse"}
         </button>
       </div>
       {mode === "voice" && listening && (

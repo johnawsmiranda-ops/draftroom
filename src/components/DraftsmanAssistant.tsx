@@ -218,6 +218,9 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
 
   function onPointerMove(e: React.PointerEvent) {
     if (!dragState.current.dragging) return;
+    // Belt and braces alongside touch-action: none — stops the gesture from
+    // also being interpreted as a page scroll on touch devices.
+    if (e.cancelable) e.preventDefault();
     const next = clampToViewport({
       x: e.clientX - dragState.current.offsetX,
       y: e.clientY - dragState.current.offsetY,
@@ -338,6 +341,10 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
+        // Inline so no stylesheet can win: without touch-action: none the
+        // browser treats the drag as a scroll / pull-to-refresh instead of
+        // sending us pointermove events.
+        style={{ touchAction: "none" }}
         className="relative w-full h-full flex items-end justify-center cursor-grab active:cursor-grabbing touch-none outline-none"
         title={minimized ? "Draftsman — click to bring him back" : "Draftsman — drag me, or click for a nudge"}
       >

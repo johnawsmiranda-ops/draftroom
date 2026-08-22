@@ -204,25 +204,34 @@ body {
    mobile browsers otherwise add before firing a click — that delay is what
    makes taps feel unresponsive and gets people tapping repeatedly. We also
    suppress the default grey flash and supply our own press feedback, so every
-   control visibly reacts the instant it's touched. */
-button,
-a,
-select,
-[role="button"],
-summary {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
+   control visibly reacts the instant it's touched.
 
-button:not(:disabled):active,
-a:active,
-[role="button"]:active {
-  transform: scale(0.97);
-  opacity: 0.85;
-}
+   These live in @layer base so Tailwind utilities still win: a draggable
+   element marked `touch-none` needs to keep touch-action: none, or the browser
+   claims the gesture and scrolls (or pull-to-refreshes) instead of dragging.
+   Unlayered rules outrank layered utilities, which is exactly the bug this
+   avoids. Likewise the :active transform must not override an element's own
+   animation. */
+@layer base {
+  button,
+  a,
+  select,
+  [role="button"],
+  summary {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-button:disabled {
-  cursor: not-allowed;
+  button:not(:disabled):active,
+  a:active,
+  [role="button"]:not(.touch-none):active {
+    transform: scale(0.97);
+    opacity: 0.85;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /* Anything mid-flight (a saving Server Action, an upload) pulses softly so

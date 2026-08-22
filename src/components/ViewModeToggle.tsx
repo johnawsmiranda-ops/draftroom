@@ -17,12 +17,15 @@ export function ViewModeToggle({ variant }: { variant: "sidebar" | "mobile" }) {
     );
   }
 
+  // The mobile header is tight, so the full phrase wraps to two lines on
+  // narrow screens rather than being truncated — "Switch to" makes it read as
+  // an action instead of a label for the current state.
   return (
     <button
       onClick={() => setMode(next)}
-      className="text-xs text-ink-soft hover:text-ink transition-colors underline underline-offset-2"
+      className="text-xs text-ink-soft hover:text-ink transition-colors underline underline-offset-2 text-right leading-tight"
     >
-      {next === "desktop" ? "Desktop view" : "Mobile view"}
+      Switch to {next} view
     </button>
   );
 }

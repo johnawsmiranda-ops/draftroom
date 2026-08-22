@@ -146,6 +146,13 @@ async function guard() {
   return admin;
 }
 
+/** Changing who holds power, or destroying accounts, is super-admin only. */
+async function guardSuper() {
+  const admin = await guard();
+  if (admin.role !== "superadmin") throw new Error("Super admin required");
+  return admin;
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
@@ -195,13 +202,14 @@ export async function setUserPlanAction(userId: string, plan: "free" | "premium"
   return { ok: true };
 }
 
-export async function setUserRoleAction(userId: string, role: "user" | "admin") {
-  const admin = await guard();
-  if (admin.id === userId && role === "user") {
-    return { ok: false, error: "You can't remove your own admin access." };
+export async function setUserRoleAction(userId: string, role: "user" | "admin" | "superadmin") {
+  const admin = await guardSuper();
+  if (admin.id === userId && role !== "superadmin") {
+    return { ok: false, error: "You can't remove your own super admin access." };
   }
   await prisma.user.update({ where: { id: userId }, data: { role } });
   revalidatePath("/admin");
+  revalidatePath("/admin/users");
   return { ok: true };
 }
 
@@ -217,7 +225,7 @@ export async function setUserPasswordAction(userId: string, password: string) {
 }
 
 export async function deleteUserAction(userId: string) {
-  const admin = await guard();
+  const admin = await guardSuper();
   if (admin.id === userId) {
     return { ok: false, error: "You can't delete your own account from here." };
   }

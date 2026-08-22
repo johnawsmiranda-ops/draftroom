@@ -6,8 +6,9 @@ export const config = {
     "/projects/:path*",
     "/writing-dates/:path*",
     "/profile/:path*",
-    // Signed-in check only — the admin role itself is verified server-side in
-    // requireAdmin(), since middleware runs on the edge without DB access.
-    "/admin/:path*",
+    // /admin is intentionally NOT matched here: it has its own sign-in page at
+    // /admin/login, and the panel layout's requireAdmin() does the real check
+    // (middleware runs on the edge with no database access, so it couldn't
+    // verify the admin role anyway).
   ],
 };

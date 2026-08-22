@@ -72,10 +72,12 @@ function RowMenu({ user, onDone }: { user: AdminUserRow; onDone: () => void }) {
               {user.status === "disabled" ? "Re-enable account" : "Disable account"}
             </button>
             <button
-              onClick={() => run(() => setUserRoleAction(user.id, user.role === "admin" ? "user" : "admin"))}
+              onClick={() =>
+                run(() => setUserRoleAction(user.id, user.role === "user" ? "admin" : "user"))
+              }
               className="block w-full text-left px-4 py-2.5 hover:bg-paper-deep border-t border-line"
             >
-              {user.role === "admin" ? "Revoke admin" : "Make admin"}
+              {user.role === "user" ? "Make admin" : "Revoke admin"}
             </button>
             <button
               onClick={() => {
@@ -118,12 +120,16 @@ export function AdminUserTable({
   page,
   pages,
   query,
+  basePath = "/admin/users",
 }: {
   rows: AdminUserRow[];
   total: number;
   page: number;
   pages: number;
   query: string;
+  // Where search and pagination should navigate — the dashboard shows a
+  // preview of this table but sends any interaction to the full Users page.
+  basePath?: string;
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(query);
@@ -132,14 +138,14 @@ export function AdminUserTable({
     e.preventDefault();
     const params = new URLSearchParams();
     if (search.trim()) params.set("q", search.trim());
-    router.push(`/admin?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   function goToPage(p: number) {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (p > 1) params.set("page", String(p));
-    router.push(`/admin?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   return (
@@ -179,6 +185,7 @@ export function AdminUserTable({
                   <div className="flex items-center gap-2.5">
                     <Avatar name={u.name} avatarUrl={u.avatarUrl} size={28} />
                     <span className="truncate">{u.name ?? "—"}</span>
+                    {u.role === "superadmin" && <Pill label="Super Admin" tone="amber" />}
                     {u.role === "admin" && <Pill label="Admin" tone="amber" />}
                   </div>
                 </td>

@@ -7,17 +7,24 @@ export function PasswordField({
   label,
   placeholder,
   minLength,
+  dark,
 }: {
   name: string;
   label: string;
   placeholder: string;
   minLength?: number;
+  // Renders against the dark "room" background used by the admin sign-in.
+  dark?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div>
-      <label className="text-[11px] uppercase tracking-[0.12em] text-ink-soft block mb-1.5">
+      <label
+        className={`text-[11px] uppercase tracking-[0.12em] block mb-1.5 ${
+          dark ? "text-paper/50" : "text-ink-soft"
+        }`}
+      >
         {label}
       </label>
       <div className="relative">
@@ -26,7 +33,9 @@ export function PasswordField({
           height="15"
           viewBox="0 0 24 24"
           fill="none"
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
+          className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${
+            dark ? "text-paper/50" : "text-ink-soft"
+          }`}
         >
           <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.6" />
           <path d="M8 10V7a4 4 0 018 0v3" stroke="currentColor" strokeWidth="1.6" />
@@ -37,12 +46,18 @@ export function PasswordField({
           required
           minLength={minLength}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-line bg-paper pl-9 pr-10 py-2.5 text-sm outline-none focus:border-ink transition-colors"
+          className={`w-full rounded-lg pl-9 pr-10 py-2.5 text-sm outline-none transition-colors ${
+            dark
+              ? "border border-room-line/60 bg-white/5 text-paper focus:border-paper/40"
+              : "border border-line bg-paper focus:border-ink"
+          }`}
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink"
+          className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+            dark ? "text-paper/50 hover:text-paper" : "text-ink-soft hover:text-ink"
+          }`}
           tabIndex={-1}
         >
           {visible ? (

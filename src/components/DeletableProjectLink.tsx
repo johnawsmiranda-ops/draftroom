@@ -15,10 +15,20 @@ function NavigatingOverlay({ rounded }: { rounded: string }) {
   if (!pending) return null;
   return (
     <span
-      className={`absolute inset-0 ${rounded} bg-ink/[0.04] ring-2 ring-accent pointer-events-none flex items-center justify-center`}
+      className={`absolute inset-0 ${rounded} bg-card/85 backdrop-blur-[1px] ring-2 ring-accent pointer-events-none flex items-center justify-center gap-2.5 px-4`}
     >
-      <span className="text-[11px] text-ink-soft bg-card/90 rounded-full px-2.5 py-1 shadow-sm">
-        Opening…
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/draftsman.png"
+        alt=""
+        width={30}
+        height={51}
+        className="w-[30px] h-[51px] object-contain animate-draftsman-bob shrink-0"
+      />
+      <span className="text-[11px] text-ink-soft leading-snug">
+        Getting you back to
+        <br />
+        where you left off…
       </span>
     </span>
   );
@@ -70,6 +80,7 @@ export function SidebarProjectRow({ id, title }: { id: string; title: string }) 
         onPointerDown={() => setPressed(true)}
         onPointerUp={() => setPressed(false)}
         onPointerCancel={() => setPressed(false)}
+        onMouseLeave={() => setPressed(false)}
         className={`relative flex-1 min-w-0 px-3 py-2 truncate rounded-lg transition-colors ${
           pressed ? "bg-white/15 text-paper font-medium" : ""
         }`}
@@ -82,7 +93,7 @@ export function SidebarProjectRow({ id, title }: { id: string; title: string }) 
         onClick={handleDelete}
         disabled={pending}
         title="Delete project"
-        className="opacity-0 group-hover/row:opacity-100 transition-opacity pr-3 text-room-line hover:text-accent disabled:opacity-40"
+        className="opacity-0 group-hover/row:opacity-100 [@media(hover:none)]:opacity-50 transition-opacity pr-3 p-1 text-room-line hover:text-accent disabled:opacity-40"
       >
         <TrashIcon />
       </button>
@@ -101,7 +112,6 @@ export function ProjectCardLink({
   subtitle: string;
 }) {
   const [pending, startTransition] = useTransition();
-  const [hover, setHover] = useState(false);
   // Set on pointer-down so the card reacts on contact, before the router has
   // even been asked to navigate.
   const [pressed, setPressed] = useState(false);
@@ -128,12 +138,8 @@ export function ProjectCardLink({
       }}
       onPointerUp={() => setPressed(false)}
       onPointerCancel={() => setPressed(false)}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => {
-        setHover(false);
-        setPressed(false);
-      }}
-      className={`relative rounded-2xl bg-card border p-5 transition-all ${
+      onMouseLeave={() => setPressed(false)}
+      className={`group/card relative rounded-2xl bg-card border p-5 transition-all ${
         pressed
           ? "border-accent ring-2 ring-accent shadow-md"
           : "border-line hover:-translate-y-0.5 hover:shadow-sm"
@@ -142,13 +148,17 @@ export function ProjectCardLink({
       <p className="font-display text-lg mb-1 truncate pr-6">{title}</p>
       <p className="text-xs text-ink-soft">{subtitle}</p>
       <NavigatingOverlay rounded="rounded-2xl" />
+      {/*
+        Visibility is pure CSS. Driving it from React hover state meant the
+        first tap on a touch screen only fired mouseenter — revealing the bin
+        instead of opening the project, so everything needed tapping twice.
+        On devices with no hover the icon is simply always visible.
+      */}
       <button
         onClick={handleDelete}
         disabled={pending}
         title="Delete project"
-        className={`absolute top-4 right-4 text-ink-soft hover:text-accent transition-opacity disabled:opacity-40 ${
-          hover ? "opacity-100" : "opacity-0"
-        }`}
+        className="absolute top-4 right-4 p-1 -m-1 text-ink-soft hover:text-accent transition-opacity disabled:opacity-40 opacity-0 group-hover/card:opacity-100 [@media(hover:none)]:opacity-60"
       >
         <TrashIcon />
       </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useViewMode } from "@/lib/view-mode";
 
 const STORAGE_KEY = "draftroom.assistantPosition";
 // Matches the exported artwork's aspect ratio (320x540).
@@ -9,6 +10,11 @@ const AVATAR_HEIGHT = 142;
 const MINI_WIDTH = 122;
 const MINI_HEIGHT = 40;
 const MARGIN = 20;
+// Height of the fixed bottom tab bar in mobile view. On a fresh load he's
+// placed so his feet rest on top of it rather than floating over it — on
+// desktop the same idea, with the bottom of the window as the floor.
+const MOBILE_TAB_BAR = 64;
+const FLOOR_GAP = 4;
 // Auto-collapse to the small pill after this long with no interaction.
 const IDLE_MS = 5 * 60 * 1000;
 const IDLE_CHECK_MS = 15_000;
@@ -53,8 +59,12 @@ const REACTION_DURATION = 850;
 type Point = { x: number; y: number };
 
 export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
+  const { mode } = useViewMode();
   const [mounted, setMounted] = useState(false);
   const [position, setPosition] = useState<Point | null>(null);
+  // Once he's been dragged (or a saved spot was restored) we stop
+  // repositioning him, so switching views never yanks him out of place.
+  const hasCustomPosition = useRef(false);
   const [open, setOpen] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -91,19 +101,24 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
         const parsed = JSON.parse(saved) as Point;
         if (typeof parsed.x === "number" && typeof parsed.y === "number") {
           initial = clampToViewport(parsed);
+          hasCustomPosition.current = true;
         }
       }
     } catch {
       // ignore malformed storage
     }
-    if (!initial) {
-      initial = {
-        x: window.innerWidth - AVATAR_WIDTH - MARGIN,
-        y: window.innerHeight - AVATAR_HEIGHT - MARGIN,
-      };
-    }
-    setPosition(initial);
+    setPosition(initial ?? restingSpot());
   }, []);
+
+  // Re-seat him on the floor line when the view mode resolves or the person
+  // toggles between mobile and desktop — but only while he's still in his
+  // default spot.
+  useEffect(() => {
+    if (hasCustomPosition.current) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPosition(restingSpot());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   useEffect(() => {
     function onResize() {
@@ -149,6 +164,21 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
     return { x: Math.min(Math.max(p.x, 4), Math.max(maxX, 4)), y: Math.min(Math.max(p.y, 4), Math.max(maxY, 4)) };
   }
 
+  /**
+   * Where he stands before anyone moves him: lower right, feet resting on the
+   * nearest horizontal edge — the mobile tab bar's top edge on phones, the
+   * bottom of the window on desktop — so he reads as standing on a line
+   * rather than floating in the corner.
+   */
+  function restingSpot(): Point {
+    const { w, h } = sizeRef.current;
+    const floorOffset = mode === "mobile" ? MOBILE_TAB_BAR : 0;
+    return clampToViewport({
+      x: window.innerWidth - w - MARGIN,
+      y: window.innerHeight - floorOffset - h - FLOOR_GAP,
+    });
+  }
+
   const savePosition = useCallback((p: Point) => {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
@@ -187,6 +217,7 @@ export function DraftsmanAssistant({ userName }: { userName?: string | null }) {
       y: e.clientY - dragState.current.offsetY,
     });
     dragState.current.moved = true;
+    hasCustomPosition.current = true;
     setPosition(next);
   }
 

@@ -20,10 +20,11 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`pb-3 border-b-2 transition-colors ${
+            aria-current={active ? "page" : undefined}
+            className={`pb-3 -mb-px border-b-[2.5px] transition-colors ${
               active
                 ? "border-ink text-ink font-semibold"
-                : "border-transparent text-ink-soft hover:text-ink"
+                : "border-transparent text-ink-soft hover:text-ink hover:border-line"
             }`}
           >
             {tab.label}

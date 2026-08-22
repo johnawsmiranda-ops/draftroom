@@ -97,11 +97,10 @@ export function ManuscriptSpine({
   const [chapters, setChapters] = useState(doc.chapters);
   const [, startTransition] = useTransition();
   const dragIndex = useRef<number | null>(null);
-  // Only the drag handle should be able to start a reorder — without this,
-  // the whole row being `draggable` meant clicking anywhere (title, open
-  // button, a slightly-off tap) could be read as a tiny drag and silently
-  // reorder chapters.
-  const dragEnabled = useRef(false);
+  // Only true while the grip handle is held. Making the whole row draggable
+  // stops clicks and focus from reaching the rename input inside it, so the
+  // row opts into dragging just for the duration of a grip press.
+  const [dragEnabled, setDragEnabled] = useState(false);
 
   function persistOrder(next: Chapter[]) {
     setChapters(next);
@@ -167,30 +166,23 @@ export function ManuscriptSpine({
         {chapters.map((chapter, index) => (
           <div
             key={chapter.id}
-            draggable
-            onDragStart={(e) => {
-              if (!dragEnabled.current) {
-                e.preventDefault();
-                return;
-              }
+            draggable={dragEnabled}
+            onDragStart={() => {
               dragIndex.current = index;
             }}
+            onDragEnd={() => setDragEnabled(false)}
             onDragOver={(e) => e.preventDefault()}
-            onDrop={() => onDrop(index)}
-            onDragEnd={() => {
-              dragEnabled.current = false;
+            onDrop={() => {
+              onDrop(index);
+              setDragEnabled(false);
             }}
             className="group flex items-center gap-3 rounded-xl border border-line bg-card px-4 py-3 hover:-translate-y-0.5 transition-transform"
           >
             <span
-              className="cursor-grab active:cursor-grabbing"
+              onPointerDown={() => setDragEnabled(true)}
+              onPointerUp={() => setDragEnabled(false)}
+              className="cursor-grab active:cursor-grabbing touch-none"
               title="Drag to reorder"
-              onMouseDown={() => {
-                dragEnabled.current = true;
-              }}
-              onMouseUp={() => {
-                dragEnabled.current = false;
-              }}
             >
               <DragHandle />
             </span>
@@ -205,19 +197,9 @@ export function ManuscriptSpine({
             <span className="text-xs text-ink-soft shrink-0">{chapter.wordCount.toLocaleString()} words</span>
             <Link
               href={`/projects/${projectId}/write/${doc.id}?chapter=${chapter.id}`}
-              title="Open chapter"
-              className="shrink-0 flex items-center gap-1 text-xs text-ink-soft hover:text-ink transition-colors rounded-full border border-line px-2.5 py-1 hover:border-ink"
+              className="text-xs rounded-full border border-line px-3 py-1.5 text-ink-soft hover:border-ink hover:text-ink transition-colors shrink-0"
             >
               Open
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M9 6l6 6-6 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
             </Link>
             <button
               onClick={() => removeChapter(chapter.id, chapter.title)}

@@ -11,7 +11,9 @@ datasource db {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
-  passwordHash  String
+  // Null for accounts created through Google sign-in — they have no password
+  // of their own. Every password check must handle that.
+  passwordHash  String?
   name          String?
   avatarUrl     String?   @db.Text
   // "user" | "admin" — admins reach the admin panel. Plain strings rather
@@ -19,8 +21,11 @@ model User {
   role          String    @default("user")
   // "active" | "disabled" — disabled accounts are refused at login.
   status        String    @default("active")
-  // "free" | "premium" — no billing wired up yet; set manually for now.
+  // "free" | "premium" — no billing wired up yet; set manually or by voucher.
   plan          String    @default("free")
+  // When a voucher-granted premium period runs out. Null means the plan was
+  // set by hand and doesn't expire on its own.
+  premiumUntil  DateTime?
   createdAt     DateTime  @default(now())
 
   projects       Project[]
@@ -28,6 +33,7 @@ model User {
   documents      Document[]
   writingDates   WritingDate[]
   writingSessions WritingSession[]
+  redemptions    VoucherRedemption[]
 }
 
 model Project {
@@ -156,6 +162,54 @@ model SupportMessage {
   subject   String
   message   String
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// A redeemable code that grants Premium for a stretch of time. There's no
+// billing yet, so a voucher is simply a gift of access rather than a discount
+// off a price.
+model Voucher {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  label       String
+  monthsAdded Int       @default(1)
+  maxUses     Int       @default(1)
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  redemptions VoucherRedemption[]
+
+  @@index([code])
+  @@index([createdAt])
+}
+
+model VoucherRedemption {
+  id         String   @id @default(cuid())
+  voucherId  String
+  userId     String
+  redeemedAt DateTime @default(now())
+
+  voucher Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One redemption per person per code — stops a single code being farmed.
+  @@unique([voucherId, userId])
+  @@index([userId])
+}
+
+// A broadcast shown to every signed-in writer until they dismiss it.
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  // "info" | "event" | "maintenance" — drives the accent colour only.
+  kind      String   @default("info")
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([createdAt])
 }

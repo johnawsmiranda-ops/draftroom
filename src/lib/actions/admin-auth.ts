@@ -36,6 +36,8 @@ export async function adminLoginAction(
 
   if (!user) return generic;
   if (user.status === "disabled") return generic;
+  // Google-created accounts have no password; they must use Google sign-in.
+  if (!user.passwordHash) return generic;
   if (!(await bcrypt.compare(password, user.passwordHash))) return generic;
 
   const isAdmin =

@@ -12,7 +12,7 @@ export default async function LandingPage() {
     <main className="flex-1 flex flex-col bg-paper paper-texture">
       <PublicHeader />
 
-      <section className="flex-1 flex flex-col items-center justify-center text-center px-6 max-w-3xl mx-auto py-16">
+      <section className="flex flex-col items-center text-center px-6 max-w-3xl mx-auto pt-10 sm:pt-14 pb-14">
         <p className="text-sm uppercase tracking-[0.25em] text-ink-soft mb-6">
           A creative playground for writers
         </p>
@@ -40,6 +40,10 @@ export default async function LandingPage() {
             Try it first — no account needed
           </Link>
         </div>
+
+        <p className="text-xs uppercase tracking-[0.15em] text-ink-soft/70 mt-10">
+          Write &nbsp;·&nbsp; Glimpse &nbsp;·&nbsp; Writing Dates
+        </p>
       </section>
 
       <section className="max-w-5xl mx-auto px-6 sm:px-8 py-16 sm:py-24">

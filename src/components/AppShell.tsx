@@ -4,6 +4,7 @@ import { ViewModeProvider, useViewMode } from "@/lib/view-mode";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileShell } from "@/components/MobileShell";
 import { DraftsmanAssistant } from "@/components/DraftsmanAssistant";
+import { SandboxImportBridge } from "@/components/SandboxImportBridge";
 
 type Project = { id: string; title: string };
 
@@ -62,6 +63,7 @@ export function AppShell({
         {children}
       </ShellSwitcher>
       <DraftsmanAssistant userName={userName} />
+      <SandboxImportBridge />
     </ViewModeProvider>
   );
 }

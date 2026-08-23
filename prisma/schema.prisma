@@ -34,6 +34,7 @@ model User {
   writingDates   WritingDate[]
   writingSessions WritingSession[]
   redemptions    VoucherRedemption[]
+  deletionRequests AccountDeletionRequest[]
 }
 
 model Project {
@@ -151,6 +152,24 @@ model WritingSession {
 
   @@index([userId])
   @@index([projectId])
+}
+
+// A self-serve "please delete my account" request. This does NOT delete
+// anything automatically -- there is no email/notification pipeline wired
+// up yet, so an admin has to notice and act on it manually via the admin
+// panel or by querying the table directly. One pending request per user;
+// see requestAccountDeletionAction.
+model AccountDeletionRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  status    String   @default("pending") // "pending" | "completed" | "cancelled"
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 // Messages sent through the public Support page's contact form. Not tied

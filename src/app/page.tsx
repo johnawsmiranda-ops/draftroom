@@ -26,12 +26,20 @@ export default async function LandingPage() {
           your fragments — a line, a scene, a voice thought — a beautiful place to land, and
           welcomes you back when you&apos;re ready to write.
         </p>
-        <Link
-          href="/signup"
-          className="rounded-full bg-ink text-paper px-8 py-3.5 text-base hover:opacity-90 transition-opacity"
-        >
-          Enter Draftroom
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Link
+            href="/signup"
+            className="rounded-full bg-ink text-paper px-8 py-3.5 text-base hover:opacity-90 transition-opacity"
+          >
+            Enter Draftroom
+          </Link>
+          <Link
+            href="/try"
+            className="text-sm text-ink-soft hover:text-ink transition-colors underline underline-offset-4"
+          >
+            Try it first — no account needed
+          </Link>
+        </div>
       </section>
 
       <PublicFooter />

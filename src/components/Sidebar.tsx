@@ -4,6 +4,7 @@ import { NewProjectInline } from "@/components/NewProjectInline";
 import { SidebarProjectRow } from "@/components/DeletableProjectLink";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { Avatar } from "@/components/Avatar";
+import { SidebarSuggestions } from "@/components/SidebarSuggestions";
 
 type Project = { id: string; title: string };
 
@@ -64,6 +65,8 @@ export function Sidebar({
           <NewProjectInline />
         </div>
       </div>
+
+      <SidebarSuggestions />
 
       <div className="px-6 py-3 border-t border-room-line/60">
         <ViewModeToggle variant="sidebar" />

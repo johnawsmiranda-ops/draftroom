@@ -2,37 +2,70 @@
 
 import { useEffect, useState } from "react";
 
-const STORAGE_KEY = "draftroom.welcomeSeen";
+const SEEN_KEY = "draftroom.welcomeSeen";
+const LAST_VISIT_KEY = "draftroom.lastVisit";
+const RETURN_THRESHOLD_MS = 5 * 24 * 60 * 60 * 1000; // 5 days
 
 /**
- * First-visit welcome modal + a permanent "Need help?" link that reopens it.
- * The "seen" flag lives in localStorage (same pattern as the Draftsman
- * assistant's position) rather than the database — this is a per-browser
- * nicety, not account state worth a schema change.
+ * Welcome modal + a permanent "Need help?" link that reopens it.
+ *
+ * Opens automatically the very first time someone reaches Home (brand-new
+ * user, greeted "Welcome to your room"), and again any time at least 5
+ * days have passed since their last visit (returning user, greeted
+ * "Welcome back"). Both the "has this person ever completed onboarding"
+ * flag and their last-visit timestamp live in localStorage — same
+ * per-browser pattern as the Draftsman assistant's saved position, not
+ * account state worth a schema change.
  */
 export function WelcomeGuide({ firstName }: { firstName?: string }) {
   const [open, setOpen] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
 
   useEffect(() => {
     let seen = false;
+    let lastVisit: number | null = null;
     try {
-      seen = Boolean(window.localStorage.getItem(STORAGE_KEY));
+      seen = Boolean(window.localStorage.getItem(SEEN_KEY));
+      const raw = window.localStorage.getItem(LAST_VISIT_KEY);
+      lastVisit = raw ? Number(raw) : null;
     } catch {
       // Private browsing / storage blocked — just don't auto-open.
     }
-    // One-time client-only check for a first-visit flag; safe to skip in the deps array.
+
+    const now = Date.now();
+    const msSinceLastVisit = lastVisit ? now - lastVisit : Infinity;
+    const shouldAutoOpen = !seen || msSinceLastVisit >= RETURN_THRESHOLD_MS;
+
+    // One-time client-only check of first-visit/last-visit flags; safe to skip in the deps array.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!seen) setOpen(true);
+    setIsReturning(seen);
+    if (shouldAutoOpen) {
+      setOpen(true);
+    }
+
+    try {
+      window.localStorage.setItem(LAST_VISIT_KEY, String(now));
+    } catch {
+      // Ignore — worst case the 5-day return prompt just doesn't fire.
+    }
   }, []);
 
   function close() {
     setOpen(false);
     try {
-      window.localStorage.setItem(STORAGE_KEY, "1");
+      window.localStorage.setItem(SEEN_KEY, "1");
     } catch {
       // Ignore — worst case the modal reappears next visit.
     }
   }
+
+  const heading = isReturning
+    ? firstName
+      ? `Welcome back, ${firstName}.`
+      : "Welcome back."
+    : firstName
+      ? `Welcome to your room, ${firstName}.`
+      : "Welcome to your room.";
 
   return (
     <>
@@ -53,10 +86,10 @@ export function WelcomeGuide({ firstName }: { firstName?: string }) {
             className="bg-card border border-line rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-8 sm:p-10 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-soft mb-2">Getting started</p>
-            <h2 className="font-display text-2xl mb-6">
-              {firstName ? `Welcome to your room, ${firstName}.` : "Welcome to your room."}
-            </h2>
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-soft mb-2">
+              {isReturning ? "Welcome back" : "Getting started"}
+            </p>
+            <h2 className="font-display text-2xl mb-6">{heading}</h2>
 
             <div className="space-y-4 mb-8">
               <GuideItem title="Write" body="Open a project and work on your manuscript, chapter by chapter." />

@@ -136,7 +136,14 @@ export function WelcomeGuide({ firstName }: { firstName?: string }) {
                 <p>
                   Nothing here writes for you — everything you put down stays yours. If something
                   breaks, feels confusing, or you just want to tell me what you&apos;d want next,
-                  I&apos;d genuinely like to hear it.
+                  I&apos;d genuinely like to hear it — email me directly at{" "}
+                  <a
+                    href="mailto:support@mindcrossed.com"
+                    className="text-accent underline decoration-dotted underline-offset-2 hover:opacity-80"
+                  >
+                    support@mindcrossed.com
+                  </a>
+                  .
                 </p>
               </div>
             </div>

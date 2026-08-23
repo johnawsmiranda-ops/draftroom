@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const SEEN_KEY = "draftroom.welcomeSeen";
@@ -91,14 +92,34 @@ export function WelcomeGuide({ firstName }: { firstName?: string }) {
             </p>
             <h2 className="font-display text-2xl mb-6">{heading}</h2>
 
+            <div className="rounded-xl overflow-hidden border border-line mb-6">
+              <Image
+                src="/onboarding-guide.png"
+                alt="Draftroom home page with Write, Glimpse, Writing Dates, and New project labeled 1 through 4"
+                width={1400}
+                height={335}
+                className="w-full h-auto"
+              />
+            </div>
+
             <div className="space-y-4 mb-8">
-              <GuideItem title="Write" body="Open a project and work on your manuscript, chapter by chapter." />
               <GuideItem
+                number={1}
+                title="Write"
+                body="Open a project and work on your manuscript, chapter by chapter."
+              />
+              <GuideItem
+                number={2}
                 title="Glimpse"
                 body="Capture a fragment — a line, a scene, a thought — without committing to a full draft yet."
               />
-              <GuideItem title="Writing Dates" body="Come back to a project on a schedule you set for yourself." />
               <GuideItem
+                number={3}
+                title="Writing Dates"
+                body="Come back to a project on a schedule you set for yourself."
+              />
+              <GuideItem
+                number={4}
                 title="+ New project"
                 body="Start something new any time — a novel, a sermon, a poem, whatever you're working on."
               />
@@ -137,11 +158,16 @@ export function WelcomeGuide({ firstName }: { firstName?: string }) {
   );
 }
 
-function GuideItem({ title, body }: { title: string; body: string }) {
+function GuideItem({ number, title, body }: { number: number; title: string; body: string }) {
   return (
-    <div>
-      <p className="font-display text-base">{title}</p>
-      <p className="text-sm text-ink-soft leading-snug">{body}</p>
+    <div className="flex gap-3">
+      <span className="shrink-0 mt-0.5 flex items-center justify-center w-6 h-6 rounded-full bg-accent text-paper text-xs font-semibold">
+        {number}
+      </span>
+      <div>
+        <p className="font-display text-base">{title}</p>
+        <p className="text-sm text-ink-soft leading-snug">{body}</p>
+      </div>
     </div>
   );
 }

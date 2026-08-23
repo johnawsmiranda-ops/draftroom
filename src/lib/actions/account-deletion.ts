@@ -28,8 +28,16 @@ export async function requestAccountDeletionAction() {
   });
   if (existing) return { ok: true, alreadyPending: true };
 
+  // session.user.email is typed nullable by NextAuth even though the User
+  // row itself always has one -- look the real value up rather than trust
+  // the session type.
+  const dbUser = await prisma.user.findUniqueOrThrow({
+    where: { id: user.id },
+    select: { email: true },
+  });
+
   await prisma.accountDeletionRequest.create({
-    data: { userId: user.id, email: user.email },
+    data: { userId: user.id, email: dbUser.email },
   });
 
   revalidatePath("/profile");

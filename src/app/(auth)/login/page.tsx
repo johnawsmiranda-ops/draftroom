@@ -53,6 +53,12 @@ export default function LoginPage() {
 
             <PasswordField name="password" label="Password" placeholder="Enter your password" />
 
+            <p className="text-right -mt-2">
+              <Link href="/forgot-password" className="text-xs text-ink-soft hover:text-ink transition-colors">
+                Forgot password?
+              </Link>
+            </p>
+
             {state?.error && <p className="text-sm text-accent">{state.error}</p>}
 
             <button

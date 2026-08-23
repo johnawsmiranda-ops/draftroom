@@ -35,6 +35,7 @@ model User {
   writingSessions WritingSession[]
   redemptions    VoucherRedemption[]
   deletionRequests AccountDeletionRequest[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Project {
@@ -170,6 +171,24 @@ model AccountDeletionRequest {
 
   @@index([userId])
   @@index([status])
+}
+
+// A one-time link sent by email so someone who forgot their password can
+// set a new one. Only meaningful for accounts that have a password at all --
+// Google-only accounts are told there's nothing to reset. The token itself
+// is never stored -- only its hash, so a leaked database row can't be used
+// to reset anyone's password (see hashToken in password-reset.ts).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Messages sent through the public Support page's contact form. Not tied

@@ -6,7 +6,7 @@ import { NewProjectTopButton } from "@/components/NewProjectTopButton";
 import { NewProjectBanner } from "@/components/NewProjectBanner";
 import { NewProjectHomeCard } from "@/components/NewProjectHomeCard";
 import { ProjectCardLink } from "@/components/DeletableProjectLink";
-import { getResumeHref } from "@/lib/resume";
+import { WelcomeGuide } from "@/components/WelcomeGuide";
 
 function timeAgo(date: Date) {
   const diff = Date.now() - new Date(date).getTime();
@@ -24,14 +24,15 @@ export default async function HomePage() {
   const projects = await listProjects();
   const firstName = (user.name ?? "").split(" ")[0];
   const hasProjects = projects.length > 0;
-  // Straight back to the chapter they last touched, wherever it lives.
-  const resumeHref = await getResumeHref();
 
   return (
     <main className="px-4 sm:px-10 py-12 max-w-5xl mx-auto">
-      <p className="text-sm uppercase tracking-[0.2em] text-ink-soft mb-2">
-        {firstName ? `Welcome, ${firstName}` : "Welcome"}
-      </p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm uppercase tracking-[0.2em] text-ink-soft">
+          {firstName ? `Welcome, ${firstName}` : "Welcome"}
+        </p>
+        <WelcomeGuide firstName={firstName} />
+      </div>
 
       <div className="flex items-start sm:items-center justify-between gap-4 mb-12 flex-col sm:flex-row">
         <h1 className="font-display text-4xl">Your creative room.</h1>
@@ -43,13 +44,14 @@ export default async function HomePage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-14">
         {hasProjects ? (
           <Link
-            href={resumeHref ?? `/projects/${projects[0].id}/write`}
-            className="rounded-2xl bg-sticky-sage/60 border border-line p-6 hover:-translate-y-0.5 transition-transform"
+            href={`/projects/${projects[0].id}/write`}
+            className="group relative rounded-2xl bg-sticky-sage/60 border border-line p-6 hover:-translate-y-0.5 transition-transform"
           >
+            <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink text-paper text-[11px] px-2.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-md z-10">
+              Open your manuscript and keep writing
+            </span>
             <p className="font-display text-xl mb-1">Write</p>
-            <p className="text-sm text-ink-soft">
-              {resumeHref ? "Pick up where you left off." : "Continue your work."}
-            </p>
+            <p className="text-sm text-ink-soft">Continue your work.</p>
           </Link>
         ) : (
           <NewProjectHomeCard kind="write" />
@@ -58,8 +60,11 @@ export default async function HomePage() {
         {hasProjects ? (
           <Link
             href={`/projects/${projects[0].id}/glimpses`}
-            className="rounded-2xl bg-sticky-peach/60 border border-line p-6 hover:-translate-y-0.5 transition-transform"
+            className="group relative rounded-2xl bg-sticky-peach/60 border border-line p-6 hover:-translate-y-0.5 transition-transform"
           >
+            <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink text-paper text-[11px] px-2.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-md z-10">
+              Capture a quick fragment or idea
+            </span>
             <p className="font-display text-xl mb-1">Glimpse</p>
             <p className="text-sm text-ink-soft">Leave something behind.</p>
           </Link>
@@ -69,8 +74,11 @@ export default async function HomePage() {
 
         <Link
           href="/writing-dates"
-          className="rounded-2xl bg-sticky-lav/60 border border-line p-6 hover:-translate-y-0.5 transition-transform"
+          className="group relative rounded-2xl bg-sticky-lav/60 border border-line p-6 hover:-translate-y-0.5 transition-transform"
         >
+          <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink text-paper text-[11px] px-2.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-md z-10">
+            Set a schedule to come back and write
+          </span>
           <p className="font-display text-xl mb-1">Writing Dates</p>
           <p className="text-sm text-ink-soft">Come back to your work.</p>
         </Link>

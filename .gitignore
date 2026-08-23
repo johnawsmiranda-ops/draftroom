@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env
+
+# OAuth client secret downloads — must never be committed
+client_secret*.json

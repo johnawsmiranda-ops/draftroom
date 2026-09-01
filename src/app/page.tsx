@@ -1,6 +1,7 @@
 import { getUser } from "@/lib/current-user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 
@@ -108,6 +109,25 @@ export default async function LandingPage() {
               with no account at all.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="max-w-2xl mx-auto px-6 py-16 sm:py-20 text-center border-t border-line">
+        <p className="text-xs uppercase tracking-[0.2em] text-ink-soft mb-6">
+          A note from the founder
+        </p>
+        <p className="font-display text-2xl sm:text-3xl leading-relaxed italic mb-6">
+          &ldquo;Draftroom began with a simple belief: ideas deserve a place to stay.&rdquo;
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <p className="text-ink-soft">&mdash; John Miranda,</p>
+          <Image
+            src="/draftsman.png"
+            alt="The Draftroom draftsman"
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
         </div>
       </section>
 

@@ -60,7 +60,11 @@ export async function createDocumentWithTemplateAction(formData: FormData) {
   if (!project) return;
 
   const template = getTemplate(templateKey);
-  const sections = template?.includes ?? ["Chapter 1"];
+  // Same opt-out as project creation: skip the extra structural sections
+  // (Plot, Characters, World, Timeline, etc.) when asked, and just start
+  // with a single chapter instead.
+  const chaptersOnly = formData.get("chaptersOnly") === "1";
+  const sections = chaptersOnly ? ["Chapter 1"] : (template?.includes ?? ["Chapter 1"]);
 
   const document = await prisma.document.create({
     data: {
@@ -151,9 +155,32 @@ export async function createChapterAction(documentId: string, projectId: string)
   const document = await prisma.document.findFirst({ where: { id: documentId, userId: user.id } });
   if (!document) return;
 
-  const count = await prisma.chapter.count({ where: { documentId } });
+  const existing = await prisma.chapter.findMany({
+    where: { documentId },
+    select: { title: true, orderIndex: true },
+  });
+
+  // Number the new chapter off the highest existing "Chapter N" title, not
+  // the total chapter count -- templates (like Novel) seed non-numbered
+  // chapters such as "Plot" or "Characters" alongside "Chapter 1", so
+  // counting every chapter would jump straight to "Chapter 6" instead of
+  // the "Chapter 2" a person actually expects next.
+  const highestChapterNumber = existing.reduce((max, c) => {
+    const match = /^Chapter (\d+)$/.exec(c.title);
+    if (!match) return max;
+    return Math.max(max, Number(match[1]));
+  }, 0);
+
+  const nextOrderIndex = existing.length
+    ? Math.max(...existing.map((c) => c.orderIndex)) + 1
+    : 0;
+
   const chapter = await prisma.chapter.create({
-    data: { documentId, title: `Chapter ${count + 1}`, orderIndex: count },
+    data: {
+      documentId,
+      title: `Chapter ${highestChapterNumber + 1}`,
+      orderIndex: nextOrderIndex,
+    },
   });
 
   revalidatePath(`/projects/${projectId}/write/${documentId}`);

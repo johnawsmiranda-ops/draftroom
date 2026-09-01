@@ -19,6 +19,7 @@ export function NewProjectModal({
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [templateKey, setTemplateKey] = useState<TemplateKey | "">("");
+  const [chaptersOnly, setChaptersOnly] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   if (!open) return <>{trigger(() => setOpen(true))}</>;
@@ -37,6 +38,7 @@ export function NewProjectModal({
         onClick={(e) => e.stopPropagation()}
       >
         <input type="hidden" name="templateKey" value={templateKey} />
+        <input type="hidden" name="chaptersOnly" value={chaptersOnly ? "1" : ""} />
 
         <div className="flex items-start justify-between mb-1">
           <div>
@@ -72,7 +74,10 @@ export function NewProjectModal({
                 <button
                   key={opt.label}
                   type="button"
-                  onClick={() => setTemplateKey(opt.key)}
+                  onClick={() => {
+                    setTemplateKey(opt.key);
+                    setChaptersOnly(false);
+                  }}
                   aria-pressed={active}
                   className={`relative text-left rounded-xl border-2 p-3 transition-all ${
                     active
@@ -98,9 +103,45 @@ export function NewProjectModal({
             })}
           </div>
           {selected && (
-            <p className="text-[11px] text-paper/40 mt-3">
-              Includes: {selected.includes.join(", ")}
-            </p>
+            <div className="mt-3">
+              <p className="text-[11px] text-paper/40">
+                Includes: {selected.includes.join(", ")}
+              </p>
+              {selected.includes.length > 1 && (
+                <div className="mt-3 rounded-xl border border-room-line/50 p-3">
+                  <p className="text-xs text-paper/70 mb-2">
+                    Set up {selected.label.toLowerCase()} with Plot, Characters, World, and
+                    Timeline sections, or just start with chapters?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setChaptersOnly(false)}
+                      aria-pressed={!chaptersOnly}
+                      className={`text-xs rounded-full px-3.5 py-1.5 border transition-colors ${
+                        !chaptersOnly
+                          ? "border-accent bg-accent/20 text-paper"
+                          : "border-room-line/60 text-paper/60 hover:text-paper"
+                      }`}
+                    >
+                      Add all sections
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChaptersOnly(true)}
+                      aria-pressed={chaptersOnly}
+                      className={`text-xs rounded-full px-3.5 py-1.5 border transition-colors ${
+                        chaptersOnly
+                          ? "border-accent bg-accent/20 text-paper"
+                          : "border-room-line/60 text-paper/60 hover:text-paper"
+                      }`}
+                    >
+                      Chapters only
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 

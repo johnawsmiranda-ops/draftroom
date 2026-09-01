@@ -13,7 +13,11 @@ export async function createProjectFromTemplateAction(formData: FormData) {
   if (!title) return;
 
   const template = getTemplate(templateKey);
-  const sections = template?.includes ?? ["Chapter 1"];
+  // When someone picks a template but opts out of its extra structural
+  // sections (Plot, Characters, World, Timeline, etc.), fall back to a
+  // single starter chapter instead of the full section list.
+  const chaptersOnly = formData.get("chaptersOnly") === "1";
+  const sections = chaptersOnly ? ["Chapter 1"] : (template?.includes ?? ["Chapter 1"]);
 
   const project = await prisma.project.create({
     data: { userId: user.id, title },
